@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer components {
+  .feature-card {
+    @apply transition-all duration-300 ease-out cursor-pointer;
+  }
+
+  .feature-card:hover {
+    @apply transform scale-105 shadow-xl;
+  }
+
+  .feature-card-1:hover {
+    @apply bg-blue-50;
+  }
+
+  .feature-card-1:hover .icon-box-1 {
+    @apply bg-blue-500 text-white scale-110;
+  }
+
+  .feature-card-2:hover {
+    @apply bg-emerald-50;
+  }
+
+  .feature-card-2:hover .icon-box-2 {
+    @apply bg-emerald-500 text-white scale-110;
+  }
+
+  .feature-card-3:hover {
+    @apply bg-purple-50;
+  }
+
+  .feature-card-3:hover .icon-box-3 {
+    @apply bg-purple-500 text-white scale-110;
+  }
+
+  .icon-box {
+    @apply transition-all duration-300 ease-out;
+  }
+}
