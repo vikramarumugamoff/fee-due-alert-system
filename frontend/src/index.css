@@ -1,13 +1,169 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+:root {
+  --royal-blue: #273c75;
+  --royal-blue-dark: #1a2847;
+  --royal-blue-light: #3d5a9f;
+  --orange-accent: #ff8c42;
+  --orange-light: #ffe4cc;
+  --white: #ffffff;
+  --light-bg: #f5f6fa;
+  --border-soft: #dcdde1;
+  --dark-gray: #2c3e50;
+  --light-gray: #f8f9fa;
+}
+
+body {
+  background-color: var(--light-bg);
+  color: var(--dark-gray);
+  font-size: 14px;
+}
 
 @layer components {
+  /* Sidebar Navigation */
+  .sidebar-nav {
+    @apply bg-gradient-to-b from-[#273c75] to-[#1a2847] text-white text-sm;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Navigation Button */
+  .nav-button {
+    @apply px-4 py-2.5 rounded-xl font-medium transition-all duration-300 flex items-center gap-2.5 text-slate-300 text-sm;
+  }
+
+  .nav-button:hover {
+    @apply bg-[#3d5a9f] text-white;
+  }
+
+  .nav-button.active {
+    @apply bg-[#3d5a9f] text-white rounded-xl;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Primary Button */
+  .btn-primary {
+    @apply bg-[#273c75] text-white px-5 py-2 rounded-lg font-semibold transition-all duration-300 text-sm;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .btn-primary:hover {
+    @apply bg-[#1a2847];
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: scale(1.05);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply bg-[#1ABC9C] text-white px-5 py-2 rounded-lg font-semibold transition-all duration-300 text-sm;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-[#0fa385];
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: scale(1.05);
+  }
+
+  /* Card Component */
+  .card {
+    @apply bg-white rounded-2xl border border-[#e8eaed] transition-all duration-300;
+    box-shadow: 0 1px 3px 0px rgba(0, 0, 0, 0.1);
+  }
+
+  .card:hover {
+    @apply border-[#273c75];
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Header Typography */
+  .heading-lg {
+    @apply text-3xl font-bold text-[#273c75];
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .heading-2xl {
+    @apply text-2xl font-bold text-[#273c75];
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .heading-md {
+    @apply text-xl font-bold text-[#273c75];
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .heading-sm {
+    @apply text-lg font-semibold text-[#273c75];
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .subheading {
+    @apply text-[#5a6c7d] text-sm font-medium;
+  }
+
+  /* Alert/Banner */
+  .alert-warning {
+    @apply bg-[#ffe4cc] border-l-4 border-[#ff8c42] p-5 rounded-xl;
+  }
+
+  .alert-warning-text {
+    @apply text-[#8b5a2b] font-semibold text-sm;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* Table Styles */
+  .table-header {
+    @apply bg-[#f5f6fa] border-b border-[#dcdde1];
+  }
+
+  .table-header th {
+    @apply text-[#273c75] font-semibold text-xs;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .table-row {
+    @apply border-b border-[#dcdde1] transition-colors duration-200;
+  }
+
+  .table-row:hover {
+    @apply bg-[#f5f6fa];
+  }
+
+  .table-row td {
+    @apply text-xs text-[#2c3e50];
+  }
+
+  /* Badge Styles */
+  .badge-success {
+    @apply bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-pending {
+    @apply bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  /* Feature Card */
   .feature-card {
     @apply transition-all duration-300 ease-out cursor-pointer;
   }
 
   .feature-card:hover {
-    @apply transform scale-105 shadow-xl;
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   }
 
   .feature-card-1:hover {
@@ -15,26 +171,45 @@
   }
 
   .feature-card-1:hover .icon-box-1 {
-    @apply bg-blue-500 text-white scale-110;
+    @apply bg-blue-500 text-white;
+    transform: scale(1.1);
   }
 
   .feature-card-2:hover {
-    @apply bg-emerald-50;
+    @apply bg-orange-50;
   }
 
   .feature-card-2:hover .icon-box-2 {
-    @apply bg-emerald-500 text-white scale-110;
+    @apply bg-[#ff8c42] text-white;
+    transform: scale(1.1);
   }
 
   .feature-card-3:hover {
-    @apply bg-purple-50;
+    @apply bg-slate-50;
   }
 
   .feature-card-3:hover .icon-box-3 {
-    @apply bg-purple-500 text-white scale-110;
+    @apply bg-[#273c75] text-white;
+    transform: scale(1.1);
   }
 
   .icon-box {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Input Field */
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-[#dcdde1] rounded-lg text-sm transition-all duration-300;
+  }
+
+  .input-field:focus {
+    outline: none;
+    border-color: #273c75;
+    box-shadow: 0 0 0 2px rgba(39, 60, 117, 0.1);
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
     @apply transition-all duration-300 ease-out;
   }
 }
