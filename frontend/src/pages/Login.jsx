@@ -1,9 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import BrandLogo from "../components/BrandLogo";
 
 export default function Login() {
-  const [role, setRole] = useState("student"); // 'student' or 'admin'
+  const [role, setRole] = useState("student"); // 'student' | 'fee_manager' | 'admin'
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -11,7 +12,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/login", {
+      const res = await axios.post("http://localhost:5001/login", {
         email,
         password,
         role,
@@ -23,6 +24,7 @@ export default function Login() {
       // Save token to localStorage
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userRole", role);
       }
 
       // Save user data and navigate based on role
@@ -35,12 +37,12 @@ export default function Login() {
           phone: res.data.phone
         }));
         navigate("/student-dashboard");
-      } else if (role === "admin") {
+      } else if (role === "fee_manager" || role === "admin") {
         localStorage.setItem("adminData", JSON.stringify({
           name: res.data.name || email.split("@")[0],
           email: email,
         }));
-        navigate("/admin-dashboard");
+        navigate(role === "fee_manager" ? "/fee-manager-dashboard" : "/admin-dashboard");
       }
     } catch (err) {
       alert(err?.response?.data?.message || "Login failed");
@@ -54,9 +56,7 @@ export default function Login() {
 
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="bg-gradient-to-br from-[#273c75] to-[#ff8c42] text-white w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-lg transform hover:scale-110 transition-transform duration-300 font-montserrat">
-              F
-            </div>
+            <BrandLogo size={64} className="drop-shadow-md" />
           </div>
 
           {/* Title */}
@@ -67,7 +67,7 @@ export default function Login() {
           <div className="bg-[#f5f6fa] p-2 rounded-xl mb-8 flex gap-2 w-full border border-[#dcdde1]">
             <button
               onClick={() => setRole("student")}
-              className={`px-6 py-3 rounded-lg text-xs font-bold w-1/2 transition-all duration-300 ${role === "student"
+              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "student"
                 ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
                 : "text-[#5a6c7d] hover:text-[#273c75]"
                 }`}
@@ -75,23 +75,40 @@ export default function Login() {
               Student Portal
             </button>
             <button
-              onClick={() => setRole("admin")}
-              className={`px-6 py-3 rounded-lg text-xs font-bold w-1/2 transition-all duration-300 ${role === "admin"
+              onClick={() => setRole("fee_manager")}
+              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "fee_manager"
                 ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
                 : "text-[#5a6c7d] hover:text-[#273c75]"
                 }`}
             >
-              Administrator
+              Fee Manager
+            </button>
+            <button
+              onClick={() => setRole("admin")}
+              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "admin"
+                ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
+                : "text-[#5a6c7d] hover:text-[#273c75]"
+                }`}
+            >
+              Admin
             </button>
           </div>
 
           {/* Form */}
           <div className="w-full spacey-4">
             <div className="mb-5">
-              <label className="text-xs font-semibold text-[#273c75] font-montserrat">{role === "student" ? "Student ID or Email" : "Admin ID"}</label>
+              <label className="text-xs font-semibold text-[#273c75] font-montserrat">
+                {role === "student" ? "Student ID or Email" : role === "fee_manager" ? "Fee Manager ID" : "Admin ID"}
+              </label>
               <input
                 type="text"
-                placeholder={role === "student" ? "e.g. 7376231SE... or email" : "admin@bitsathy.ac.in"}
+                placeholder={
+                  role === "student"
+                    ? "e.g. 7376231SE... or email"
+                    : role === "fee_manager"
+                      ? "feemanager@bitsathy.ac.in"
+                      : "admin@bitsathy.ac.in"
+                }
                 className="input-field mt-2 text-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

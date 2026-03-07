@@ -7,6 +7,28 @@ export default function StudentProfile() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
 
+  // Helper function to convert semester number to readable format
+  const getSemesterLabel = (semesterNum) => {
+    const num = parseInt(semesterNum);
+    if (num === 1) return "1st Semester";
+    if (num === 2) return "2nd Semester";
+    if (num === 3) return "3rd Semester";
+    if (num === 4) return "4th Semester";
+    if (num === 5) return "5th Semester";
+    if (num === 6) return "6th Semester";
+    if (num === 7) return "7th Semester";
+    if (num === 8) return "8th Semester";
+    return num + "th Semester";
+  };
+
+  // Helper function to get academic year from year number
+  const getAcademicYear = (yearNum) => {
+    const year = parseInt(yearNum);
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - (4 - year);
+    return `${startYear}-${startYear + 1}`;
+  };
+
   useEffect(() => {
     const studentData = localStorage.getItem("studentData");
     const token = localStorage.getItem("token");
@@ -25,7 +47,7 @@ export default function StudentProfile() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5000/me", {
+      const res = await axios.get("http://localhost:5001/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -35,6 +57,8 @@ export default function StudentProfile() {
           student_id: res.data.user.student_id,
           department: res.data.user.department,
           phone: res.data.user.phone,
+          semester: res.data.user.semester,
+          year: res.data.user.year,
         };
         setStudent(userData);
         localStorage.setItem("studentData", JSON.stringify(userData));
@@ -230,7 +254,7 @@ export default function StudentProfile() {
                       </label>
                       <input
                         type="text"
-                        value="4th Semester"
+                        value={getSemesterLabel(student.semester || "1")}
                         disabled
                         className="input-field bg-[#e8eef7] border-[#3d5a9f] text-[#273c75]"
                       />
@@ -241,7 +265,7 @@ export default function StudentProfile() {
                       </label>
                       <input
                         type="text"
-                        value="2024-25"
+                        value={getAcademicYear(student.year || "1")}
                         disabled
                         className="input-field bg-[#e8eef7] border-[#3d5a9f] text-[#273c75]"
                       />
@@ -255,29 +279,16 @@ export default function StudentProfile() {
                 <h3 className="text-lg font-bold font-montserrat text-[#273c75] mb-6">
                   Contact Information
                 </h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-xs font-semibold text-[#273c75] block mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={student.phone || "N/A"}
-                      disabled
-                      className="input-field bg-[#f5f6fa] border-[#dcdde1] text-[#273c75]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#273c75] block mb-2">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      value="123 Main Street, City"
-                      disabled
-                      className="input-field bg-[#f5f6fa] border-[#dcdde1] text-[#273c75]"
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-semibold text-[#273c75] block mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={student.phone || "N/A"}
+                    disabled
+                    className="input-field bg-[#f5f6fa] border-[#dcdde1] text-[#273c75]"
+                  />
                 </div>
               </div>
 
@@ -312,3 +323,4 @@ export default function StudentProfile() {
     </div>
   );
 }
+

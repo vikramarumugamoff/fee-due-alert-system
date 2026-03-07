@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" aria-hidden="true">
+  <defs>
+    <style>
+      .bell-stroke { fill: none; stroke: #1546c3; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+      .bell-fill { fill: #1546c3; }
+      .slash { stroke: #d0002a; stroke-width: 20; stroke-linecap: round; }
+    </style>
+  </defs>
+  <path class="bell-stroke" d="M64 168c14-20 18-46 18-74 0-32 20-54 46-58"/>
+  <path class="bell-stroke" d="M174 94c0 28 4 54 18 74"/>
+  <path class="bell-fill" d="M128 36c24 0 40 16 44 36-30 8-62 8-92 0 4-20 20-36 48-36z"/>
+  <path class="bell-stroke" d="M54 176h148"/>
+  <circle class="bell-fill" cx="128" cy="186" r="10"/>
+  <path class="bell-stroke" d="M102 196c6 8 16 12 26 12 10 0 20-4 26-12"/>
+  <path class="bell-stroke" d="M58 110c10-26 30-40 56-44"/>
+  <path class="bell-stroke" d="M198 110c-10-26-30-40-56-44"/>
+  <path class="slash" d="M30 56l196 144"/>
+</svg>

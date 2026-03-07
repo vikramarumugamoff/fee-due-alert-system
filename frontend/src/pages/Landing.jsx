@@ -1,4 +1,5 @@
 import collegeImg from "../assets/clgimg.webp";
+import BrandLogo from "../components/BrandLogo";
 import { useNavigate } from "react-router-dom";
 
 function Landing() {
@@ -9,9 +10,7 @@ function Landing() {
       {/* Header */}
       <header className="flex justify-between items-center px-12 py-6 bg-white shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-[#273c75] to-[#ff8c42] w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg font-montserrat">
-            F
-          </div>
+          <BrandLogo size={40} />
           <h1 className="font-bold text-[#273c75] text-lg font-montserrat">
             Fee Due Alert System
           </h1>
@@ -89,7 +88,7 @@ function Landing() {
             </div>
             <h4 className="text-lg font-bold text-[#273c75] mb-3 font-montserrat">Automated Alerts</h4>
             <p className="text-[#5a6c7d] text-sm leading-relaxed">
-              Receive instant notifications via SMS and email for upcoming
+              Receive instant notifications via email for upcoming
               fee deadlines and overdue payments automatically.
             </p>
           </div>
@@ -141,7 +140,10 @@ function Landing() {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-3 gap-12 mb-8">
             <div>
-              <h4 className="font-bold text-[#273c75] mb-3 text-base font-montserrat">Fee Due Alert System</h4>
+              <div className="flex items-center gap-2 mb-3">
+                <BrandLogo size={28} />
+                <h4 className="font-bold text-[#273c75] text-base font-montserrat">Fee Due Alert System</h4>
+              </div>
               <p className="text-[#5a6c7d] text-sm">
                 Official administrative portal for fee management and alerts.
               </p>

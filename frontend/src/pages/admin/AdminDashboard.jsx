@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 import axios from "axios";
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
   const [stats, setStats] = useState({
-    totalStudents: 1304,
-    totalFeeCollected: 212000000,
-    totalPendingFee: 1300000,
-    overdueCount: 45,
+    totalStudents: 0,
+    totalFeeCollected: 0,
+    totalPendingFee: 0,
+    pendingStudents: 0,
+    overdueCount: 0,
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
@@ -18,8 +20,9 @@ export default function AdminDashboard() {
     // Get admin data from localStorage
     const adminData = localStorage.getItem("adminData");
     const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userRole");
 
-    if (!adminData || !token) {
+    if (!adminData || !token || !["fee_manager", "admin"].includes(userRole)) {
       navigate("/login");
       return;
     }
@@ -30,7 +33,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5000/admin/dashboard-stats", {
+      const res = await axios.get("http://localhost:5001/admin/dashboard-stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStats(res.data);
@@ -44,6 +47,7 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem("adminData");
     localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
     navigate("/login");
   };
 
@@ -73,19 +77,17 @@ export default function AdminDashboard() {
       <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
         <div className="p-6 border-b border-[#f1f2f6]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#273c75] rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
-              A
-            </div>
+            <BrandLogo size={40} />
             <div>
               <h2 className="text-base font-bold text-[#273c75] font-montserrat">Fee Alert</h2>
-              <p className="text-xs text-slate-400">Admin Panel</p>
+              <p className="text-xs text-slate-400">Fee Manager Panel</p>
             </div>
           </div>
         </div>
 
         <nav className="p-4 space-y-2">
           <button
-            onClick={() => navigate("/admin-dashboard")}
+            onClick={() => navigate("/fee-manager-dashboard")}
             className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
           >
             <span>📊</span> Dashboard
@@ -113,7 +115,7 @@ export default function AdminDashboard() {
                 className="w-10 h-10 rounded-full"
               />
               <div>
-                <p className="font-semibold text-xs text-[#273c75]">Super Admin</p>
+                <p className="font-semibold text-xs text-[#273c75]">Fee Manager</p>
                 <p className="text-xs text-[#5a6c7d]">{admin.email}</p>
               </div>
             </div>
@@ -133,7 +135,7 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#273c75] font-montserrat">
-              Welcome back, Admin
+              Welcome back, Fee Manager
             </h1>
             <p className="text-[#5a6c7d] text-sm mt-1">
               Here's what's happening today.
@@ -190,7 +192,7 @@ export default function AdminDashboard() {
               {formatCurrency(stats.totalPendingFee)}
             </h3>
             <p className="text-xs text-[#f39c12] mt-2 font-medium">
-              From {Math.floor(stats.totalPendingFee / 275000)} students
+              From {stats.pendingStudents} students
             </p>
           </div>
 
@@ -264,3 +266,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

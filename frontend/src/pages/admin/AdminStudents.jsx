@@ -1,20 +1,36 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 import axios from "axios";
 
 export default function AdminStudents() {
     const [admin, setAdmin] = useState(null);
+    const [role, setRole] = useState("");
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [filterDepartment, setFilterDepartment] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
     const navigate = useNavigate();
+    const limit = 10;
 
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [showEditStudentModal, setShowEditStudentModal] = useState(false);
+    const [editStudent, setEditStudent] = useState({
+        id: "",
+        fullName: "",
+        email: "",
+        phone: "",
+        department: "",
+        year: "1",
+        semester: "1"
+    });
 
     // Form States
     const [newStudent, setNewStudent] = useState({
@@ -23,6 +39,9 @@ export default function AdminStudents() {
         email: "",
         phone: "",
         department: "",
+        studentType: "Day Scholar",
+        year: "1",
+        semester: "1",
         dueDate: "",
         password: "Student@123"
     });
@@ -34,27 +53,35 @@ export default function AdminStudents() {
     useEffect(() => {
         const adminData = localStorage.getItem("adminData");
         const token = localStorage.getItem("token");
+        const userRole = localStorage.getItem("userRole");
 
-        if (!adminData || !token) {
-            navigate("/login");
-            return;
+        if (!adminData || !token || !["fee_manager", "admin"].includes(userRole)) {
+          navigate(role === "admin" ? "/login" : "/login");
+          return;
         }
 
+        setRole(userRole);
         setAdmin(JSON.parse(adminData));
-        fetchStudents(token);
-    }, [navigate, search, filterDepartment, filterStatus]);
+        fetchStudents(token, userRole);
+    }, [navigate, search, filterDepartment, filterStatus, page]);
 
-    const fetchStudents = async (token) => {
+
+    const fetchStudents = async (token, currentRole) => {
         try {
             const params = new URLSearchParams();
             if (search) params.append("search", search);
             if (filterDepartment) params.append("department", filterDepartment);
             if (filterStatus) params.append("status", filterStatus);
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
 
-            const res = await axios.get(`http://localhost:5000/admin/students?${params.toString()}`, {
+            const endpoint = currentRole === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            const res = await axios.get(`${endpoint}?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setStudents(res.data);
+            setStudents(res.data?.data || []);
+            setTotal(res.data?.total || 0);
+            setTotalPages(res.data?.totalPages || 1);
         } catch (err) {
             console.error("Error fetching students:", err);
         } finally {
@@ -65,19 +92,21 @@ export default function AdminStudents() {
     const handleLogout = () => {
         localStorage.removeItem("adminData");
         localStorage.removeItem("token");
-        navigate("/login");
+        localStorage.removeItem("userRole");
+        navigate(role === "admin" ? "/login" : "/login");
     };
 
     const handleAddStudent = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.post("http://localhost:5000/admin/students", newStudent, {
+            const endpoint = role === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            await axios.post(endpoint, newStudent, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setShowAddModal(false);
-            setNewStudent({ fullName: "", studentId: "", email: "", phone: "", department: "", dueDate: "", password: "" });
-            fetchStudents(token);
+            setNewStudent({ fullName: "", studentId: "", email: "", phone: "", department: "", studentType: "Day Scholar", year: "1", semester: "1", dueDate: "", password: "" });
+            fetchStudents(token, role);
             alert("Student added successfully!");
         } catch (err) {
             alert(err.response?.data?.message || "Error adding student");
@@ -88,7 +117,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.put(`http://localhost:5000/admin/students/${selectedStudent.id}/due-date`, {
+            await axios.put(`http://localhost:5001/admin/students/${selectedStudent.id}/due-date`, {
                 dueDate: editDueDate
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -107,35 +136,138 @@ export default function AdminStudents() {
         setShowEditModal(true);
     };
 
+    const openEditStudentModal = (student) => {
+        setEditStudent({
+            id: student.id,
+            fullName: student.full_name,
+            email: student.email,
+            phone: student.phone || "",
+            department: student.department || "",
+            year: student.year || "1",
+            semester: student.semester || "1"
+        });
+        setShowEditStudentModal(true);
+    };
+
+    const handleUpdateStudent = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        try {
+            await axios.put(`http://localhost:5001/api/students/${editStudent.id}`, {
+                fullName: editStudent.fullName,
+                email: editStudent.email,
+                phone: editStudent.phone,
+                department: editStudent.department,
+                year: editStudent.year,
+                semester: editStudent.semester
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setShowEditStudentModal(false);
+            fetchStudents(token, role);
+            alert("Student updated successfully!");
+        } catch (err) {
+            alert(err.response?.data?.message || "Error updating student");
+        }
+    };
+
+    const handleToggleStatus = async (student) => {
+        const token = localStorage.getItem("token");
+        try {
+            await axios.patch(`http://localhost:5001/api/students/${student.id}/status`, {
+                is_active: !student.is_active
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            fetchStudents(token, role);
+        } catch (err) {
+            alert(err.response?.data?.message || "Error updating status");
+        }
+    };
+
+    const handleResetPassword = async (student) => {
+        const newPassword = window.prompt("Enter new password for this student:");
+        if (!newPassword) return;
+        const token = localStorage.getItem("token");
+        try {
+            await axios.patch(`http://localhost:5001/api/students/${student.id}/reset-password`, {
+                password: newPassword
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            alert("Password reset successfully!");
+        } catch (err) {
+            alert(err.response?.data?.message || "Error resetting password");
+        }
+    };
+
+    const handleDeactivate = async (student) => {
+        if (!window.confirm("Deactivate this student account?")) return;
+        const token = localStorage.getItem("token");
+        try {
+            await axios.delete(`http://localhost:5001/api/students/${student.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            fetchStudents(token, role);
+        } catch (err) {
+            alert(err.response?.data?.message || "Error deactivating student");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#f5f6fa] flex">
             {/* Sidebar */}
             <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
                 <div className="p-6 border-b border-[#f1f2f6]">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#273c75] rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
-                            A
-                        </div>
+                        <BrandLogo size={40} />
                         <div>
                             <h2 className="text-base font-bold text-[#273c75] font-montserrat">Fee Alert</h2>
-                            <p className="text-xs text-slate-400">Admin Panel</p>
+                            <p className="text-xs text-slate-400">{role === "admin" ? "Admin Panel" : "Fee Manager Panel"}</p>
                         </div>
                     </div>
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate("/admin-dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "/admin-dashboard" : "/fee-manager-dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3">
                         <span>👥</span> Students
                     </button>
-                    <button
-                        onClick={() => navigate("/admin/fee-management")}
-                        className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
-                    >
-                        <span>💳</span> Fee Management
-                    </button>
+                    {role === "fee_manager" && (
+                        <button
+                            onClick={() => navigate("/admin/fee-management")}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+                        >
+                            <span>💳</span> Fee Management
+                        </button>
+                    )}
+                    {role === "admin" && (
+                        <button
+                            onClick={() => navigate("/admin/users")}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+                        >
+                            <span>UM</span> User Management
+                        </button>
+                    )}
+                    {role === "admin" && (
+                        <button
+                            onClick={() => navigate("/admin/fee-structure")}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+                        >
+                            <span>FS</span> Fee Structure
+                        </button>
+                    )}
+                    {role === "admin" && (
+                        <button
+                            onClick={() => navigate("/admin/academic-structure")}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+                        >
+                            <span>AS</span> Academic Structure
+                        </button>
+                    )}
+
                 </nav>
 
                 {admin && (
@@ -147,7 +279,7 @@ export default function AdminStudents() {
                                 className="w-10 h-10 rounded-full"
                             />
                             <div>
-                                <p className="font-semibold text-xs text-[#273c75]">Super Admin</p>
+                                <p className="font-semibold text-xs text-[#273c75]">{role === "admin" ? "Admin" : "Fee Manager"}</p>
                                 <p className="text-xs text-[#5a6c7d]">{admin.email}</p>
                             </div>
                         </div>
@@ -185,13 +317,19 @@ export default function AdminStudents() {
                                 placeholder="Search by name, ID, or email..."
                                 className="w-full pl-10 pr-4 py-2 bg-[#f8f9fa] border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setPage(1);
+                                }}
                             />
                         </div>
                         <select
                             className="px-4 py-2 bg-[#f8f9fa] border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75] text-[#5a6c7d]"
                             value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
+                            onChange={(e) => {
+                                setFilterStatus(e.target.value);
+                                setPage(1);
+                            }}
                         >
                             <option value="">All Status</option>
                             <option value="Paid">Paid</option>
@@ -201,7 +339,10 @@ export default function AdminStudents() {
                         <select
                             className="px-4 py-2 bg-[#f8f9fa] border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75] text-[#5a6c7d]"
                             value={filterDepartment}
-                            onChange={(e) => setFilterDepartment(e.target.value)}
+                            onChange={(e) => {
+                                setFilterDepartment(e.target.value);
+                                setPage(1);
+                            }}
                         >
                             <option value="">All Departments</option>
                             <option value="Computer Science">Computer Science</option>
@@ -224,72 +365,176 @@ export default function AdminStudents() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-[#f8f9fa] border-b border-[#e1e2e6]">
                             <tr>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student ID</th>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student Name</th>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Department</th>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Fee Status</th>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Due Date</th>
-                                <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Actions</th>
+                                {role === "admin" ? (
+                                    <>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student ID</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student Name</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Department</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Semester</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Contact</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Email</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Fee Status</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Account</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Actions</th>
+                                    </>
+                                ) : (
+                                    <>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student ID</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Student Name</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Department</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Fee Status</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Due Date</th>
+                                        <th className="p-4 text-xs font-bold text-[#5a6c7d] uppercase">Actions</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="p-8 text-center text-[#5a6c7d]">Loading students...</td>
+                                    <td colSpan={role === "admin" ? 9 : 6} className="p-8 text-center text-[#5a6c7d]">Loading students...</td>
                                 </tr>
                             ) : students.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="p-8 text-center text-[#5a6c7d]">No students found.</td>
+                                    <td colSpan={role === "admin" ? 9 : 6} className="p-8 text-center text-[#5a6c7d]">No students found.</td>
                                 </tr>
                             ) : (
                                 students.map((student) => (
                                     <tr key={student.id} className="border-b border-[#f1f2f6] hover:bg-slate-50 transition-colors">
-                                        <td className="p-4 text-sm font-semibold text-[#2c3e50]">{student.student_id}</td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <img
-                                                    src={`https://ui-avatars.com/api/?name=${student.full_name}&background=random&color=fff`}
-                                                    alt={student.full_name}
-                                                    className="w-8 h-8 rounded-full"
-                                                />
-                                                <div>
-                                                    <p className="text-sm font-bold text-[#2c3e50]">{student.full_name}</p>
-                                                    <p className="text-xs text-[#5a6c7d]">{student.email}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-sm text-[#5a6c7d]">{student.department}</td>
-                                        <td className="p-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${student.status === 'Paid' ? 'bg-green-100 text-green-600' :
-                                                student.status === 'Overdue' ? 'bg-red-100 text-red-600' :
-                                                    'bg-yellow-100 text-yellow-600'
-                                                }`}>
-                                                {student.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-sm text-[#5a6c7d]">
-                                            {student.status === 'Paid' ? '--' : new Date(student.due_date).toLocaleDateString()}
-                                        </td>
-                                        <td className="p-4">
-                                            <button
-                                                onClick={() => openEditModal(student)}
-                                                className="p-2 text-[#5a6c7d] hover:text-[#273c75] hover:bg-[#e8f0fe] rounded-full transition-all"
-                                                title="Edit Due Date"
-                                            >
-                                                ✏️
-                                            </button>
-                                        </td>
+                                        {role === "admin" ? (
+                                            <>
+                                                <td className="p-4 text-sm font-semibold text-[#2c3e50]">{student.student_id}</td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={`https://ui-avatars.com/api/?name=${student.full_name}&background=random&color=fff`}
+                                                            alt={student.full_name}
+                                                            className="w-8 h-8 rounded-full"
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm font-bold text-[#2c3e50]">{student.full_name}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">{student.department}</td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">{student.semester}</td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">{student.phone || "-"}</td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">{student.email}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${student.status === 'Paid' ? 'bg-green-100 text-green-600' :
+                                                        student.status === 'Overdue' ? 'bg-red-100 text-red-600' :
+                                                            'bg-yellow-100 text-yellow-600'
+                                                        }`}>
+                                                        {student.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${student.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                        {student.is_active ? "Active" : "Inactive"}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => openEditStudentModal(student)}
+                                                        className="px-3 py-1 text-xs rounded-lg border border-[#dcdde1] hover:bg-[#f5f6fa]"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleResetPassword(student)}
+                                                        className="px-3 py-1 text-xs rounded-lg border border-[#dcdde1] hover:bg-[#f5f6fa]"
+                                                    >
+                                                        Reset Password
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleStatus(student)}
+                                                        className="px-3 py-1 text-xs rounded-lg border border-[#dcdde1] hover:bg-[#f5f6fa]"
+                                                    >
+                                                        {student.is_active ? "Disable" : "Enable"}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeactivate(student)}
+                                                        className="px-3 py-1 text-xs rounded-lg border border-[#dcdde1] hover:bg-[#f5f6fa]"
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td className="p-4 text-sm font-semibold text-[#2c3e50]">{student.student_id}</td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={`https://ui-avatars.com/api/?name=${student.full_name}&background=random&color=fff`}
+                                                            alt={student.full_name}
+                                                            className="w-8 h-8 rounded-full"
+                                                        />
+                                                        <div>
+                                                            <p className="text-sm font-bold text-[#2c3e50]">{student.full_name}</p>
+                                                            <p className="text-xs text-[#5a6c7d]">{student.email}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">{student.department}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${student.status === 'Paid' ? 'bg-green-100 text-green-600' :
+                                                        student.status === 'Overdue' ? 'bg-red-100 text-red-600' :
+                                                            'bg-yellow-100 text-yellow-600'
+                                                        }`}>
+                                                        {student.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-sm text-[#5a6c7d]">
+                                                    {student.status === 'Paid' ? '--' : new Date(student.due_date).toLocaleDateString()}
+                                                </td>
+                                                <td className="p-4">
+                                                    <button
+                                                        onClick={() => openEditModal(student)}
+                                                        className="p-2 text-[#5a6c7d] hover:text-[#273c75] hover:bg-[#e8f0fe] rounded-full transition-all"
+                                                        title="Edit Due Date"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                </td>
+                                            </>
+                                        )}
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
                     <div className="p-4 border-t border-[#e1e2e6] flex justify-between items-center text-xs text-[#5a6c7d]">
-                        <p>Showing {students.length} entries</p>
+                        <p>Showing {students.length} of {total} entries</p>
                         <div className="flex gap-2">
-                            <button className="px-3 py-1 bg-[#f8f9fa] border border-[#dcdde1] rounded hover:bg-[#e1e2e6] disabled:opacity-50">Previous</button>
-                            <button className="px-3 py-1 bg-[#273c75] text-white rounded">1</button>
-                            <button className="px-3 py-1 bg-[#f8f9fa] border border-[#dcdde1] rounded hover:bg-[#e1e2e6] disabled:opacity-50">Next</button>
+                            <button
+                                className="px-3 py-1 bg-[#f8f9fa] border border-[#dcdde1] rounded hover:bg-[#e1e2e6] disabled:opacity-50"
+                                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                                disabled={page <= 1}
+                            >
+                                Previous
+                            </button>
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                                const pageNum = start + i;
+                                if (pageNum > totalPages) return null;
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        className={`px-3 py-1 rounded ${pageNum === page ? "bg-[#273c75] text-white" : "bg-[#f8f9fa] border border-[#dcdde1] hover:bg-[#e1e2e6]"}`}
+                                        onClick={() => setPage(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                            <button
+                                className="px-3 py-1 bg-[#f8f9fa] border border-[#dcdde1] rounded hover:bg-[#e1e2e6] disabled:opacity-50"
+                                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                                disabled={page >= totalPages}
+                            >
+                                Next
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -347,6 +592,56 @@ export default function AdminStudents() {
                                         <option value="Electronics">Electronics</option>
                                         <option value="Mechanical">Mechanical</option>
                                         <option value="Civil">Civil</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Student Type</label>
+                                    <select
+                                        className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:border-[#273c75] outline-none"
+                                        value={newStudent.studentType}
+                                        onChange={(e) => setNewStudent({ ...newStudent, studentType: e.target.value })}
+                                        required
+                                    >
+                                        <option value="Day Scholar">Day Scholar</option>
+                                        <option value="Hosteller">Hosteller</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Year</label>
+                                    <select
+                                        className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:border-[#273c75] outline-none"
+                                        value={newStudent.year}
+                                        onChange={(e) => {
+                                            const year = e.target.value;
+                                            setNewStudent({
+                                                ...newStudent,
+                                                year,
+                                                semester: (parseInt(year, 10) * 2 - 1).toString()
+                                            });
+                                        }}
+                                        required
+                                    >
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Semester</label>
+                                    <select
+                                        className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:border-[#273c75] outline-none"
+                                        value={newStudent.semester}
+                                        onChange={(e) => setNewStudent({ ...newStudent, semester: e.target.value })}
+                                        required
+                                    >
+                                        {[parseInt(newStudent.year, 10) * 2 - 1, parseInt(newStudent.year, 10) * 2].map((sem) => (
+                                            <option key={sem} value={sem.toString()}>
+                                                Semester {sem}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -412,8 +707,95 @@ export default function AdminStudents() {
                 </div>
             )}
 
+            {/* Edit Student Modal (Admin) */}
+            {showEditStudentModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-[#273c75]">Edit Student</h3>
+                            <button onClick={() => setShowEditStudentModal(false)} className="text-gray-400 hover:text-gray-600">âœ•</button>
+                        </div>
+                        <form onSubmit={handleUpdateStudent} className="space-y-4" autoComplete="off">
+                            <div>
+                                <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                    value={editStudent.fullName}
+                                    onChange={(e) => setEditStudent({ ...editStudent, fullName: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                    value={editStudent.email}
+                                    onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Phone</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                    value={editStudent.phone}
+                                    onChange={(e) => setEditStudent({ ...editStudent, phone: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Department</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                    value={editStudent.department}
+                                    onChange={(e) => setEditStudent({ ...editStudent, department: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Year</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                        value={editStudent.year}
+                                        onChange={(e) => setEditStudent({ ...editStudent, year: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-[#5a6c7d] mb-1">Semester</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 border border-[#dcdde1] rounded-lg text-sm focus:outline-none focus:border-[#273c75]"
+                                        value={editStudent.semester}
+                                        onChange={(e) => setEditStudent({ ...editStudent, semester: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditStudentModal(false)}
+                                    className="flex-1 bg-white border border-[#dcdde1] text-[#273c75] text-sm font-semibold py-2.5 rounded-lg hover:bg-[#f5f6fa] transition-all duration-300"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-[#273c75] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[#1a2847] transition-all duration-300"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Edit Due Date Modal */}
-            {showEditModal && (
+            {role !== "admin" && showEditModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <h3 className="text-lg font-bold text-[#273c75] mb-4">Edit Due Date</h3>
@@ -449,3 +831,9 @@ export default function AdminStudents() {
         </div>
     );
 }
+
+
+
+
+
+

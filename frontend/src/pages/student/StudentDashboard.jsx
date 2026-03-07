@@ -10,7 +10,6 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const navigate = useNavigate();
 
-  const TOTAL_FEE = 275000;
 
   useEffect(() => {
     const studentData = localStorage.getItem("studentData");
@@ -29,7 +28,7 @@ export default function StudentDashboard() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5000/me", {
+      const res = await axios.get("http://localhost:5001/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -50,20 +49,21 @@ export default function StudentDashboard() {
 
   const fetchStudentFeeData = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5000/student/fees/${email}`, {
+      const res = await axios.get(`http://localhost:5001/student/fees/${email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setFeeData({
-        totalFee: TOTAL_FEE,
+        totalFee: res.data.totalFee,
         paidAmount: res.data.paidAmount,
         unpaidAmount: res.data.unpaidAmount,
-        dueDate: res.data.dueDate || "15 Feb 2026",
-        lastPaymentDate: res.data.lastPaymentDate || "Feb 10, 2026",
+        dueDate: res.data.dueDate,
+        lastPaymentDate: res.data.lastPaymentDate,
       });
 
+
       const historyRes = await axios.get(
-        `http://localhost:5000/student/payment-history/${email}`,
+        `http://localhost:5001/student/payment-history/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -74,10 +74,10 @@ export default function StudentDashboard() {
       console.error("Error fetching fee data:", err);
       // Fallback for demo if backend fails or new student
       setFeeData({
-        totalFee: TOTAL_FEE,
+        totalFee: 0,
         paidAmount: 0,
-        unpaidAmount: TOTAL_FEE,
-        dueDate: "15 Feb 2026",
+        unpaidAmount: 0,
+        dueDate: "N/A",
         lastPaymentDate: "N/A",
       });
       setPaymentHistory([]);
@@ -98,6 +98,7 @@ export default function StudentDashboard() {
     else if (page === "paymentHistory") navigate("/student/payment-history");
     else if (page === "profile") navigate("/student/profile");
   };
+
 
   const formatCurrency = (amount) => {
     // Logic to display in L if needed, or just raw for frontend to format
@@ -283,6 +284,7 @@ export default function StudentDashboard() {
           </div>
         )}
 
+
         {/* Warning Alert if pending */}
         {feeData && feeData.unpaidAmount > 0 && (
           <div className="bg-[#fff4e5] border-l-4 border-[#f39c12] p-6 rounded-r-xl mb-8 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -291,7 +293,7 @@ export default function StudentDashboard() {
               <div>
                 <p className="text-[#2c3e50] font-bold text-base font-montserrat">Fee Payment Reminder</p>
                 <p className="text-[#d35400] text-sm mt-1">
-                  Your semester fee of <strong>₹{feeData.unpaidAmount.toLocaleString()}</strong> is due. Please pay to avoid penalties.
+                  Your pending fee of <strong>₹{feeData.unpaidAmount.toLocaleString()}</strong> is due soon.
                 </p>
               </div>
             </div>
@@ -349,7 +351,10 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
+
+        {/* Receipt Selection Modal */}
       </main>
     </div>
   );
 }
+

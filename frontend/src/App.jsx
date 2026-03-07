@@ -7,8 +7,12 @@ import FeeStructure from "./pages/student/FeeStructure";
 import PaymentHistory from "./pages/student/PaymentHistory";
 import StudentProfile from "./pages/student/StudentProfile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import SystemAdminDashboard from "./pages/admin/SystemAdminDashboard";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminFeeManagement from "./pages/admin/AdminFeeManagement";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminFeeStructure from "./pages/admin/AdminFeeStructure";
+import AdminAcademicStructure from "./pages/admin/AdminAcademicStructure";
 
 export default function App() {
   return (
@@ -21,9 +25,13 @@ export default function App() {
         <Route path="/student/fee-structure" element={<FeeStructure />} />
         <Route path="/student/payment-history" element={<PaymentHistory />} />
         <Route path="/student/profile" element={<StudentProfile />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/fee-manager-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-dashboard" element={<SystemAdminDashboard />} />
         <Route path="/admin/students" element={<AdminStudents />} />
         <Route path="/admin/fee-management" element={<AdminFeeManagement />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/fee-structure" element={<AdminFeeStructure />} />
+        <Route path="/admin/academic-structure" element={<AdminAcademicStructure />} />
       </Routes>
     </BrowserRouter>
   );
