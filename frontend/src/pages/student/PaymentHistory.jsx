@@ -74,7 +74,7 @@ export default function PaymentHistory() {
   const handleNavigation = (page) => {
     setActiveTab(page);
     if (page === "dashboard") {
-      navigate("/student-dashboard");
+      navigate("/student/dashboard");
     } else if (page === "feeStructure") {
       navigate("/student/fee-structure");
     } else if (page === "profile") {
@@ -221,9 +221,10 @@ export default function PaymentHistory() {
                 <table className="w-full">
                   <thead>
                     <tr className="table-header">
-                      <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Reference ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Transaction ID</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Date</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Description</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Method</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Amount</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-bold text-[#273c75] font-montserrat">Action</th>
@@ -247,6 +248,9 @@ export default function PaymentHistory() {
                         </td>
                         <td className="px-6 py-3 text-[#5a6c7d] text-sm">
                           {payment.description}
+                        </td>
+                        <td className="px-6 py-3 text-[#5a6c7d] text-sm">
+                          {payment.paymentMethod || 'Online'}
                         </td>
                         <td className="px-6 py-3 font-bold text-[#1ABC9C] text-sm">
                           ₹{payment.amount.toLocaleString("en-IN")}

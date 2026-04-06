@@ -147,6 +147,21 @@ body {
     @apply text-xs text-[#2c3e50];
   }
 
+  /* Sticky table wrapper so the header stays fixed while body scrolls */
+  .table-scroll-wrapper {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  /* Keep table headers visible inside scroll wrapper */
+  .table-sticky-header thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8f9fa;
+  }
+
   /* Badge Styles */
   .badge-success {
     @apply bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold;

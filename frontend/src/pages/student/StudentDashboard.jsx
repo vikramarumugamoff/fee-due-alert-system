@@ -6,6 +6,7 @@ export default function StudentDashboard() {
   const [student, setStudent] = useState(null);
   const [feeData, setFeeData] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const navigate = useNavigate();
@@ -16,14 +17,15 @@ export default function StudentDashboard() {
     const token = localStorage.getItem("token");
 
     if (!studentData || !token) {
-      navigate("/login");
-      return;
-    }
+    navigate("/login");
+    return;
+  }
 
     const parsedStudent = JSON.parse(studentData);
     setStudent(parsedStudent);
     fetchStudentFeeData(parsedStudent.email, token);
     fetchProfile(token);
+    fetchNotifications(token);
   }, [navigate]);
 
   const fetchProfile = async (token) => {
@@ -44,6 +46,18 @@ export default function StudentDashboard() {
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
+    }
+  };
+
+  const fetchNotifications = async (token) => {
+    try {
+      const res = await axios.get("http://localhost:5001/student/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(res.data?.notifications || []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setNotifications([]);
     }
   };
 
@@ -297,11 +311,44 @@ export default function StudentDashboard() {
                 </p>
               </div>
             </div>
-            <button className="bg-[#273c75] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#1a2847] hover:shadow-lg transition-all duration-300 transform hover:translate-y-[-2px]">
+            <button 
+              onClick={() => navigate('/student/payment')}
+              className="bg-[#273c75] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#1a2847] hover:shadow-lg transition-all duration-300 transform hover:translate-y-[-2px]"
+            >
               Pay Now
             </button>
           </div>
         )}
+
+        {/* Notifications */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#f1f2f6] mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-[#2c3e50] font-montserrat">Notifications</h3>
+            <span className="text-xs font-semibold text-[#273c75] bg-[#e8ecff] px-3 py-1 rounded-full">
+              {notifications.length} new
+            </span>
+          </div>
+
+          {notifications && notifications.length > 0 ? (
+            <div className="space-y-3">
+              {notifications.slice(0, 6).map((note) => (
+                <div key={note.id} className="flex justify-between gap-4 items-start border border-[#f1f2f6] rounded-xl p-3 bg-[#f9fbff]">
+                  <div>
+                    <p className="text-sm font-semibold text-[#273c75]">{note.title || "Fee Alert"}</p>
+                    <p className="text-sm text-[#2c3e50] leading-snug">{note.message}</p>
+                  </div>
+                  <p className="text-[11px] text-[#5a6c7d] whitespace-nowrap">
+                    {note.created_at ? new Date(note.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-[#f8f9fa] rounded-xl border border-dashed border-[#e1e2e6]">
+              <p className="text-sm text-[#5a6c7d] font-medium">You're all caught up. No new alerts.</p>
+            </div>
+          )}
+        </div>
 
         {/* Recent Payment Activity */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#f1f2f6] mb-8">
@@ -315,9 +362,10 @@ export default function StudentDashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#f1f2f6]">
-                    <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Reference ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Transaction ID</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Method</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Amount</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-[#5a6c7d] font-montserrat uppercase tracking-wider">Action</th>
@@ -329,6 +377,7 @@ export default function StudentDashboard() {
                       <td className="px-6 py-4 font-semibold text-[#2c3e50] text-xs font-mono">{payment.referenceId}</td>
                       <td className="px-6 py-4 text-[#5a6c7d] text-sm">{new Date(payment.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-[#2c3e50] text-sm">{payment.description}</td>
+                      <td className="px-6 py-4 text-[#2c3e50] text-sm">{payment.paymentMethod || 'Online'}</td>
                       <td className="px-6 py-4 font-bold text-[#273c75] text-sm">₹{payment.amount.toLocaleString()}</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${payment.status === 'Success' ? 'bg-[#e6fffa] text-[#1ABC9C] border-[#b2f5ea]' : 'bg-[#fff5f5] text-red-500 border-red-100'}`}>

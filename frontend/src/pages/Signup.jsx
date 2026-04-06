@@ -1,9 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 
 export default function Signup({ inline = false }) {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     fullName: "",
     studentId: "",
@@ -73,7 +74,8 @@ export default function Signup({ inline = false }) {
         year: form.year,
         semester: form.semester,
       });
-      alert(res.data.message || "Registered successfully");
+      alert("Registration Successful. Please login.");
+      navigate("/login");
     } catch (e) {
       alert(e?.response?.data?.message || "Signup failed");
     }
@@ -258,7 +260,7 @@ export default function Signup({ inline = false }) {
         onClick={handleSignup}
         className="btn-primary w-full mb-4"
       >
-        Sign Up
+        Register
       </button>
 
       <p className="text-center text-xs text-[#5a6c7d]">

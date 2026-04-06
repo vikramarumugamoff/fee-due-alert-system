@@ -77,7 +77,7 @@ export default function StudentProfile() {
   const handleNavigation = (page) => {
     setActiveTab(page);
     if (page === "dashboard") {
-      navigate("/student-dashboard");
+      navigate("/student/dashboard");
     } else if (page === "feeStructure") {
       navigate("/student/fee-structure");
     } else if (page === "paymentHistory") {

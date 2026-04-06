@@ -44,16 +44,10 @@ function Landing() {
 
           <div className="flex gap-4">
             <button
-              onClick={() => navigate("/signup")}
-              className="btn-primary"
+              onClick={() => navigate("/register")}
+              className="btn-primary px-8 py-3 text-base"
             >
               Get Started
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              className="bg-[#ff8c42] hover:bg-[#e67e34] text-white px-5 py-2 rounded-lg font-semibold transition-all duration-300 text-sm font-montserrat"
-            >
-              Sign In
             </button>
           </div>
         </div>
@@ -127,7 +121,7 @@ function Landing() {
             Join thousands of students managing their fees efficiently.
           </p>
           <button
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/register")}
             className="bg-[#ff8c42] hover:bg-[#e67e34] text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 font-montserrat"
           >
             Start Your Journey
@@ -152,7 +146,7 @@ function Landing() {
               <h4 className="font-bold text-[#273c75] mb-3 text-base font-montserrat">Quick Links</h4>
               <ul className="space-y-2 text-[#5a6c7d] text-sm">
                 <li><button onClick={() => navigate("/login")} className="hover:text-[#ff8c42] transition">Login</button></li>
-                <li><button onClick={() => navigate("/signup")} className="hover:text-[#ff8c42] transition">Sign Up</button></li>
+                <li><button onClick={() => navigate("/register")} className="hover:text-[#ff8c42] transition">Get Started</button></li>
               </ul>
             </div>
             <div>

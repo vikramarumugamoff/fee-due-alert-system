@@ -670,8 +670,8 @@ app.get('/student/payment-history/:email', authMiddleware, async (req, res) => {
   try {
     const { email } = req.params;
     const result = await pool.query(
-      `SELECT id, amount, payment_date, reference_id, description, status 
-       FROM payment_history 
+      `SELECT id, amount_paid as amount, payment_date, transaction_id as reference_id, 'Fee Payment - Semester Fee' as description, payment_status as status, payment_method 
+       FROM payments 
        WHERE student_email=$1 
        ORDER BY payment_date DESC`,
       [email]
@@ -683,7 +683,8 @@ app.get('/student/payment-history/:email', authMiddleware, async (req, res) => {
       date: new Date(payment.payment_date),
       referenceId: payment.reference_id,
       description: payment.description,
-      status: payment.status
+      status: payment.status,
+      paymentMethod: payment.payment_method
     }));
 
     res.json(payments);
@@ -693,40 +694,71 @@ app.get('/student/payment-history/:email', authMiddleware, async (req, res) => {
   }
 });
 
+// Student notifications feed
+app.get('/student/notifications', authMiddleware, requireRole(["student"]), async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const result = await pool.query(
+      `SELECT id, title, message, created_at, is_read
+       FROM notifications
+       WHERE student_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [studentId]
+    );
+    res.json({ notifications: result.rows });
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    res.status(500).json({ message: "Error fetching notifications" });
+  }
+});
+
 // Record a payment
 app.post('/student/pay-fee', authMiddleware, async (req, res) => {
   try {
-    const { email, amount } = req.body;
+    const { email, amount, paymentMethod, semester } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Invalid payment amount' });
     }
 
-    // Generate reference ID
-    const referenceId = `TXN${Date.now()}`;
+    // Simulate 2-3 second payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
 
-    // Insert payment record
+    // Generate transaction ID
+    const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const transactionId = `TXN${todayStr}${randomSuffix}`;
+
+    // Get student_id
+    const studentRes = await pool.query('SELECT id FROM students WHERE email = $1', [email]);
+    if (studentRes.rows.length === 0) {
+       return res.status(404).json({ message: 'Student not found' });
+    }
+    const studentId = studentRes.rows[0].id;
+
+    // Insert payment record into new payments table
     await pool.query(
-      `INSERT INTO payment_history 
-       (student_email, amount, reference_id, description, status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [email, amount, referenceId, `Fee Payment - Semester Fee`, 'Success']
+      `INSERT INTO payments 
+       (student_id, student_email, amount_paid, payment_method, transaction_id, payment_status, semester)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [studentId, email, amount, paymentMethod || 'Online', transactionId, 'Success', semester || 1]
     );
 
     // Update student fees
     await pool.query(
       `UPDATE student_fees 
        SET paid_amount = paid_amount + $1,
-           unpaid_amount = total_fee - (paid_amount + $1),
-           status = CASE WHEN (total_fee - (paid_amount + $1)) <= 0 THEN 'paid' ELSE 'unpaid' END,
+           unpaid_amount = GREATEST(total_fee - (paid_amount + $1), 0),
+           status = CASE WHEN (total_fee - (paid_amount + $1)) <= 0 THEN 'paid' ELSE 'Partially Paid' END,
            updated_at = NOW()
        WHERE student_email = $2`,
       [amount, email]
     );
 
     res.json({
-      message: 'Payment recorded successfully',
-      referenceId: referenceId
+      message: 'Payment Successful',
+      transactionId: transactionId
     });
   } catch (err) {
     console.error('Error processing payment:', err);
@@ -805,13 +837,13 @@ app.get('/admin/dashboard-stats', authMiddleware, requireRole(["fee_manager", "a
       }
     }
 
-    // 5. Recent Activity (Mock for now, or fetch from payment_history)
+    // 5. Recent Activity (fetch from new payments table)
     // fetching last 5 payments
     const historyResult = await pool.query(
-      `SELECT ph.*, s.full_name 
-       FROM payment_history ph
-       JOIN students s ON ph.student_id = s.id
-       ORDER BY ph.created_at DESC LIMIT 5`
+      `SELECT p.*, s.full_name 
+       FROM payments p
+       JOIN students s ON p.student_id = s.id
+       ORDER BY p.payment_date DESC LIMIT 5`
     );
 
     // Format for frontend
@@ -1029,6 +1061,26 @@ app.delete("/admin/fee-structure/:id", authMiddleware, requireRole(["admin"]), a
   } catch (err) {
     console.error("Error deleting fee structure:", err);
     res.status(500).json({ message: "Error deleting fee structure" });
+  }
+});
+
+// Alert history for a student
+app.get("/admin/students/:id/alerts", authMiddleware, requireRole(["fee_manager", "admin"]), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT a.id, a.sent_at, a.message, a.sent_by,
+              adm.name AS sent_by_name, adm.email AS sent_by_email
+       FROM alerts a
+       LEFT JOIN admins adm ON adm.id = a.sent_by
+       WHERE a.student_id = $1
+       ORDER BY a.sent_at DESC`,
+      [id]
+    );
+    res.json({ alerts: result.rows });
+  } catch (err) {
+    console.error("Error fetching alert history:", err);
+    res.status(500).json({ message: "Could not load alert history" });
   }
 });
 
@@ -1261,9 +1313,10 @@ app.put("/api/students/:id", authMiddleware, requireRole(["admin"]), async (req,
     );
 
     if (oldEmail !== email) {
+      // Also update email in related tables
       await pool.query("UPDATE student_fees SET student_email=$1 WHERE student_email=$2", [email, oldEmail]);
-      await pool.query("UPDATE student_semester_fees SET student_email=$1 WHERE student_email=$2", [email, oldEmail]);
-      await pool.query("UPDATE payment_history SET student_email=$1 WHERE student_email=$2", [email, oldEmail]);
+      await pool.query("UPDATE payments SET student_email=$1 WHERE student_email=$2", [email, oldEmail]);
+      await pool.query("UPDATE sessions SET user_id=$1 WHERE user_id=$2 AND role='student'", [id, id]);
     }
 
     const updatedStudentRes = await pool.query(
@@ -1727,7 +1780,7 @@ const REMINDER_ORDER = ["7d", "48h", "24h"];
 
 const REMINDER_SQL = {
   "7d": `
-    SELECT sf.id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
+    SELECT sf.id, sf.student_id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
            sf.reminder_7d_sent AS email_sent
     FROM student_fees sf
     JOIN students s ON s.id = sf.student_id
@@ -1740,7 +1793,7 @@ const REMINDER_SQL = {
       )
   `,
   "48h": `
-    SELECT sf.id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
+    SELECT sf.id, sf.student_id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
            sf.reminder_48h_sent AS email_sent
     FROM student_fees sf
     JOIN students s ON s.id = sf.student_id
@@ -1753,7 +1806,7 @@ const REMINDER_SQL = {
       )
   `,
   "24h": `
-    SELECT sf.id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
+    SELECT sf.id, sf.student_id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name,
            sf.reminder_24h_sent AS email_sent
     FROM student_fees sf
     JOIN students s ON s.id = sf.student_id
@@ -1766,6 +1819,85 @@ const REMINDER_SQL = {
       )
   `,
 };
+
+const BULK_ALERT_COOLDOWN_MINUTES = parseInt(process.env.BULK_ALERT_COOLDOWN_MINUTES || "30", 10);
+
+const normalizeBulkFilters = (payload = {}) => ({
+  department: payload.department || "",
+  semester: payload.semester ? parseInt(payload.semester, 10) || null : null,
+  year: payload.year ? parseInt(payload.year, 10) || null : null,
+  status: (payload.status || "all").toString().toLowerCase(),
+});
+
+function buildBulkAlertClause(filters) {
+  const conditions = ["s.is_active = TRUE"];
+  const params = [];
+  let idx = 1;
+
+  if (filters.department) {
+    conditions.push(`s.department = $${idx++}`);
+    params.push(filters.department);
+  }
+  if (filters.semester) {
+    conditions.push(`s.semester = $${idx++}`);
+    params.push(filters.semester);
+  }
+  if (filters.year) {
+    conditions.push(`s.year = $${idx++}`);
+    params.push(filters.year);
+  }
+
+  if (filters.status === "pending") {
+    conditions.push(`COALESCE(sf.unpaid_amount, 0) > 0 AND COALESCE(sf.paid_amount, 0) = 0`);
+  } else if (filters.status === "partially paid" || filters.status === "partially_paid") {
+    conditions.push(`COALESCE(sf.unpaid_amount, 0) > 0 AND COALESCE(sf.paid_amount, 0) > 0`);
+  } else if (filters.status === "pending_or_partial") {
+    conditions.push(`COALESCE(sf.unpaid_amount, 0) > 0`);
+  }
+
+  if (conditions.length === 0) conditions.push("1=1");
+  return { whereClause: conditions.join(" AND "), params };
+}
+
+const formatFiltersForLog = (filters) =>
+  JSON.stringify({
+    department: filters.department || "All",
+    semester: filters.semester || "All",
+    year: filters.year || "All",
+    status: filters.status || "all",
+  });
+
+const computePendingAmount = (row) => {
+  if (row.unpaid_amount != null) return parseFloat(row.unpaid_amount);
+  const total = parseFloat(row.total_fee || 0);
+  const paid = parseFloat(row.paid_amount || 0);
+  return Math.max(total - paid, 0);
+};
+
+async function sendBulkAlertEmail(student, alertMessage, pendingAmount, dueDate) {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_HOST) return false;
+    const formattedAmount = `Rs. ${Number(pendingAmount || 0).toLocaleString("en-IN")}`;
+    const formattedDue = dueDate ? new Date(dueDate).toLocaleDateString("en-IN") : "N/A";
+    const html = `
+      <p>Hi ${student.full_name || student.name || "Student"},</p>
+      <p>Your pending fee amount is <strong>${formattedAmount}</strong> and is due on <strong>${formattedDue}</strong>.</p>
+      <p>${alertMessage}</p>
+      <p>Regards,<br/>Fee Management Team</p>
+    `;
+
+    await transporter.sendMail({
+      from: `"Fee Alert" <${process.env.EMAIL_USER}>`,
+      to: student.email || student.student_email,
+      subject: "Fee Payment Reminder",
+      html,
+    });
+    return true;
+  } catch (err) {
+    console.error("[bulk-alert] email send failed:", err.message);
+    return false;
+  }
+}
 
 let isReminderJobRunning = false;
 
@@ -1827,6 +1959,47 @@ async function ensureStudentActiveColumn() {
   `);
 }
 
+// Track alert counts + last sent timestamp on students
+async function ensureStudentAlertColumns() {
+  await pool.query(`
+    ALTER TABLE students
+      ADD COLUMN IF NOT EXISTS alert_count INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS last_alert_sent TIMESTAMP
+  `);
+}
+
+// In-app notifications store for students
+async function ensureNotificationsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+      title VARCHAR(200) NOT NULL DEFAULT 'Fee Alert',
+      message TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      is_read BOOLEAN NOT NULL DEFAULT FALSE
+    )
+  `);
+
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_student_created ON notifications (student_id, created_at DESC)`);
+}
+
+// Persist bulk alert audit trail
+async function ensureAlertLogTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS alert_log (
+      alert_id SERIAL PRIMARY KEY,
+      student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+      message TEXT NOT NULL,
+      alert_sent_by INTEGER REFERENCES admins(id),
+      alert_date TIMESTAMP NOT NULL DEFAULT NOW(),
+      filter_used TEXT
+    )
+  `);
+
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_alert_log_student_date ON alert_log (student_id, alert_date DESC)`);
+}
+
 async function ensureFeeStructureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS fee_structure (
@@ -1842,6 +2015,95 @@ async function ensureFeeStructureTable() {
       UNIQUE (academic_year, semester)
     )
   `);
+}
+
+// Seed default fee structure (all 8 semesters) if none exist
+async function ensureDefaultFeeStructure() {
+  const existing = await pool.query("SELECT COUNT(*) FROM fee_structure");
+  if (parseInt(existing.rows[0].count, 10) > 0) return;
+
+  const academicYear = process.env.ACADEMIC_YEAR || "2024-25";
+
+  for (let sem = 1; sem <= 8; sem++) {
+    // use hosteller profile to include hostel + mess in default grid
+    const fee = calculateStudentFees("Hosteller", 1, sem);
+    const { itemized } = fee;
+
+    // map to columns
+    const tuition_fee = itemized.tuition || 0;
+    const hostel_fee = itemized.hostel || 0;
+    const exam_fee = itemized.exam || 0;
+    // place stationery + mess advance into other_fee for visibility/editing
+    const other_fee = (itemized.stationery || 0) + (itemized.refreshment || 0);
+
+    await pool.query(
+      `INSERT INTO fee_structure (academic_year, semester, tuition_fee, hostel_fee, exam_fee, other_fee)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [academicYear, sem, tuition_fee, hostel_fee, exam_fee, other_fee]
+    );
+  }
+  console.log("Seeded default fee structure for 8 semesters");
+}
+
+// Ensure payments table exists (needed for the payment gateway)
+async function ensurePaymentsTable() {
+  // 1) Create table if missing (fresh setups)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id SERIAL PRIMARY KEY,
+      student_id INTEGER REFERENCES students(id),
+      student_email VARCHAR(255),
+      amount_paid NUMERIC NOT NULL,
+      payment_method VARCHAR(50) NOT NULL DEFAULT 'Online',
+      transaction_id VARCHAR(50) UNIQUE NOT NULL,
+      payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      payment_status VARCHAR(50) DEFAULT 'Success',
+      semester INTEGER
+    )
+  `);
+
+  // 2) Backfill columns for older schemas (if table already existed)
+  await pool.query(`
+    ALTER TABLE payments
+      ADD COLUMN IF NOT EXISTS student_email VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'Success',
+      ADD COLUMN IF NOT EXISTS semester INTEGER,
+      ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'Online'
+  `);
+
+  // 3) Keep transaction_id unique
+  await pool.query(
+    'CREATE UNIQUE INDEX IF NOT EXISTS payments_transaction_id_idx ON payments(transaction_id)'
+  );
+
+  // 4) One-time migration of successful rows from legacy payment_history
+  const existing = await pool.query('SELECT COUNT(*) FROM payments');
+  if (parseInt(existing.rows[0].count, 10) === 0) {
+    const history = await pool.query("SELECT * FROM payment_history WHERE status = 'Success'");
+    for (const row of history.rows) {
+      const studentRes = await pool.query(
+        'SELECT id, semester FROM students WHERE email = $1',
+        [row.student_email]
+      );
+      if (studentRes.rows.length === 0) continue;
+      const student = studentRes.rows[0];
+      await pool.query(
+        `INSERT INTO payments (student_id, student_email, amount_paid, payment_method, transaction_id, payment_date, payment_status, semester)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (transaction_id) DO NOTHING`,
+        [
+          student.id,
+          row.student_email,
+          row.amount,
+          'Net Banking',
+          row.reference_id,
+          row.payment_date,
+          row.status || 'Success',
+          student.semester || 1
+        ]
+      );
+    }
+  }
 }
 
 async function ensureAcademicStructureTable() {
@@ -1866,7 +2128,7 @@ function buildReminderEmailHtml({ fullName, unpaidAmount, dueDate, reminderType 
     month: "short",
     year: "numeric",
   });
-  const originalFee = Number.parseFloat(unpaidAmount) || 0;
+  const pendingFee = Number.parseFloat(unpaidAmount) || 0;
 
   const today = new Date();
   const due = new Date(dueDate);
@@ -1879,7 +2141,7 @@ function buildReminderEmailHtml({ fullName, unpaidAmount, dueDate, reminderType 
     fineAmount = diffDays * 50;
   }
 
-  const totalDue = originalFee + fineAmount;
+  const totalDue = pendingFee + fineAmount;
   const toneColor = reminderType === "24h" ? "#c0392b" : reminderType === "48h" ? "#d35400" : "#273c75";
 
   return `
@@ -1904,8 +2166,8 @@ function buildReminderEmailHtml({ fullName, unpaidAmount, dueDate, reminderType 
 
         <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 15px;">
           <tr>
-            <td style="padding: 10px; border: 1px solid #e2e5ea; width: 52%;"><strong>Original <span style="background: #ffef99; padding: 0 3px;">Fee</span>:</strong></td>
-            <td style="padding: 10px; border: 1px solid #e2e5ea;">Rs. ${originalFee.toLocaleString("en-IN")}</td>
+            <td style="padding: 10px; border: 1px solid #e2e5ea; width: 52%;"><strong>Pending <span style="background: #ffef99; padding: 0 3px;">Fee</span>:</strong></td>
+            <td style="padding: 10px; border: 1px solid #e2e5ea;">Rs. ${pendingFee.toLocaleString("en-IN")}</td>
           </tr>
           <tr>
             <td style="padding: 10px; border: 1px solid #e2e5ea;"><strong>Fine Amount:</strong></td>
@@ -1949,6 +2211,15 @@ async function sendFeeReminderEmail(student, reminderType) {
   });
 }
 
+// Store alert record for history
+async function recordAlert(studentId, sentByAdminId, message) {
+  await pool.query(
+    `INSERT INTO alerts (student_id, message, sent_by, sent_at)
+     VALUES ($1, $2, $3, NOW())`,
+    [studentId, message || "Fee reminder sent", sentByAdminId || null]
+  );
+}
+
 async function getStudentsForReminder(reminderType) {
   const result = await pool.query(REMINDER_SQL[reminderType]);
   return result.rows;
@@ -1974,6 +2245,14 @@ async function processReminderWindow(reminderType) {
       try {
         await sendFeeReminderEmail(student, reminderType);
         await markReminderSent(student.id, reminder.emailFlagColumn, reminder.emailSentAtColumn);
+        await recordAlert(student.student_id || student.id, null, `${reminderType} reminder`);
+        await pool.query(
+          `UPDATE students
+           SET alert_count = COALESCE(alert_count, 0) + 1,
+               last_alert_sent = NOW()
+           WHERE id = $1`,
+          [student.student_id || student.id]
+        );
         console.log(`[fee-reminder][email] ${reminderType} reminder sent to ${student.student_email}`);
       } catch (err) {
         console.error(`[fee-reminder][email] failed for ${student.student_email}:`, err.message);
@@ -2015,6 +2294,120 @@ cron.schedule("0 * * * *", async () => {
   await runFeeReminderJob();
 });
 
+// Preview recipient count for a bulk alert
+app.post("/admin/bulk-alert/preview", authMiddleware, requireRole(["fee_manager", "admin"]), async (req, res) => {
+  const filters = normalizeBulkFilters(req.body || {});
+  const { whereClause, params } = buildBulkAlertClause(filters);
+  try {
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM students s
+       LEFT JOIN student_fees sf ON sf.student_id = s.id
+       WHERE ${whereClause}`,
+      params
+    );
+    res.json({
+      total: countRes.rows[0]?.total || 0,
+      filtersUsed: formatFiltersForLog(filters),
+    });
+  } catch (err) {
+    console.error("[bulk-alert] preview error:", err);
+    res.status(500).json({ message: "Could not compute bulk alert recipients" });
+  }
+});
+
+// Send bulk alerts to students by filter
+app.post("/admin/bulk-alert/send", authMiddleware, requireRole(["fee_manager", "admin"]), async (req, res) => {
+  const filters = normalizeBulkFilters(req.body || {});
+  const { whereClause, params } = buildBulkAlertClause(filters);
+  const filterUsed = formatFiltersForLog(filters);
+  const reminderLine = req.body.message || "Reminder: Your college fee payment is pending. Please complete the payment before the due date.";
+  const now = Date.now();
+
+  try {
+    const studentsRes = await pool.query(
+      `SELECT s.id, s.student_id, s.full_name, s.email, s.department, s.semester, s.year,
+              COALESCE(sf.unpaid_amount, 0) AS unpaid_amount,
+              COALESCE(sf.total_fee, 0) AS total_fee,
+              COALESCE(sf.paid_amount, 0) AS paid_amount,
+              COALESCE(sf.due_date, CURRENT_DATE + INTERVAL '30 days')::date AS due_date,
+              s.last_alert_sent,
+              COALESCE(s.alert_count, 0) AS alert_count
+       FROM students s
+       LEFT JOIN student_fees sf ON sf.student_id = s.id
+       WHERE ${whereClause}`,
+      params
+    );
+
+    let sent = 0;
+    let skipped = 0;
+    let recentSkipped = 0;
+    let noPendingSkipped = 0;
+    let emailSent = 0;
+
+    for (const student of studentsRes.rows) {
+      const pendingAmount = computePendingAmount(student);
+      if (pendingAmount <= 0) {
+        skipped += 1;
+        noPendingSkipped += 1;
+        continue;
+      }
+
+      const last = student.last_alert_sent ? new Date(student.last_alert_sent).getTime() : 0;
+      if (last && (now - last) < BULK_ALERT_COOLDOWN_MINUTES * 60 * 1000) {
+        skipped += 1;
+        recentSkipped += 1;
+        continue;
+      }
+
+      const dueDate = student.due_date;
+      const friendlyDue = dueDate ? new Date(dueDate).toLocaleDateString("en-IN") : "N/A";
+      const personalized = `Hi ${student.full_name}, your pending fee amount is Rs. ${pendingAmount.toLocaleString("en-IN")} due on ${friendlyDue}. ${reminderLine}`;
+
+      await pool.query(
+        `INSERT INTO notifications (student_id, title, message)
+         VALUES ($1, $2, $3)`,
+        [student.id, "Fee Payment Reminder", personalized]
+      );
+
+      await pool.query(
+        `INSERT INTO alert_log (student_id, message, alert_sent_by, filter_used)
+         VALUES ($1, $2, $3, $4)`,
+        [student.id, personalized, req.user.id || null, filterUsed]
+      );
+
+      await recordAlert(student.id, req.user.id, "Bulk alert");
+
+      await pool.query(
+        `UPDATE students
+         SET alert_count = COALESCE(alert_count, 0) + 1,
+             last_alert_sent = NOW()
+         WHERE id = $1`,
+        [student.id]
+      );
+
+      const emailDelivered = await sendBulkAlertEmail(student, reminderLine, pendingAmount, dueDate);
+      if (emailDelivered) emailSent += 1;
+
+      sent += 1;
+    }
+
+    res.json({
+      message: `Alert successfully sent to ${sent} students.`,
+      sent,
+      skipped,
+      recentSkipped,
+      noPendingSkipped,
+      totalMatched: studentsRes.rows.length,
+      emailSent,
+      filterUsed,
+    });
+  } catch (err) {
+    console.error("[bulk-alert] send error:", err);
+    res.status(500).json({ message: "Failed to send bulk alerts" });
+  }
+});
+
 // POST /admin/send-alert - Send one manual reminder email
 app.post("/admin/send-alert", authMiddleware, requireRole(["fee_manager", "admin"]), async (req, res) => {
   const { email, reminderType: requestedReminderType, dueDate } = req.body;
@@ -2036,8 +2429,16 @@ app.post("/admin/send-alert", authMiddleware, requireRole(["fee_manager", "admin
   }
 
   try {
+    // Refresh fee summary first to avoid stale amounts
+    const studentRow = await pool.query(
+      `SELECT id, full_name, student_type, year, semester, email FROM students WHERE email=$1 LIMIT 1`,
+      [email]
+    );
+    if (studentRow.rows.length === 0) return res.status(404).json({ message: "Student not found" });
+    await syncStudentFeeSummary(studentRow.rows[0]);
+
     const result = await pool.query(
-      `SELECT sf.id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name
+      `SELECT sf.id, sf.student_email, sf.unpaid_amount, sf.due_date, s.full_name, s.id AS student_id
        FROM student_fees sf
        JOIN students s ON s.id = sf.student_id
        WHERE sf.student_email = $1
@@ -2051,11 +2452,29 @@ app.post("/admin/send-alert", authMiddleware, requireRole(["fee_manager", "admin
 
     const student = result.rows[0];
     await sendFeeReminderEmail(student, reminderType);
+    await recordAlert(student.student_id, req.user.id, `Manual ${reminderType} reminder`);
+    const updateRes = await pool.query(
+      `UPDATE students
+       SET alert_count = COALESCE(alert_count, 0) + 1,
+           last_alert_sent = NOW()
+       WHERE id = $1
+       RETURNING alert_count, last_alert_sent`,
+      [student.student_id]
+    );
+
+    await pool.query(
+      `INSERT INTO alert_log (student_id, message, alert_sent_by, filter_used)
+       VALUES ($1, $2, $3, $4)`,
+      [student.student_id, `Manual ${reminderType} reminder`, req.user.id || null, "manual"]
+    );
+
     res.json({
       message: "Alert sent: email=yes",
       emailSent: true,
       reminderType,
       email: student.student_email,
+      alert_count: updateRes.rows[0]?.alert_count || 0,
+      last_alert_sent: updateRes.rows[0]?.last_alert_sent || null
     });
   } catch (err) {
     console.error("[manual-alert] send failed:", err);
@@ -2069,8 +2488,13 @@ async function startServer() {
     await ensureAdminRoleColumn();
     await ensureAdminActiveColumn();
     await ensureStudentActiveColumn();
+    await ensureStudentAlertColumns();
+    await ensureNotificationsTable();
+    await ensureAlertLogTable();
     await ensureFeeStructureTable();
+    await ensureDefaultFeeStructure();
     await ensureAcademicStructureTable();
+    await ensurePaymentsTable();
     await ensureReminderColumns();
     await ensureStudentFeesForMissingStudents();
     await syncAllStudentFeeSummaries();

@@ -87,7 +87,7 @@ export default function AdminDashboard() {
 
         <nav className="p-4 space-y-2">
           <button
-            onClick={() => navigate("/fee-manager-dashboard")}
+            onClick={() => navigate("/fee-manager/dashboard")}
             className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
           >
             <span>📊</span> Dashboard

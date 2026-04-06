@@ -56,7 +56,7 @@ export default function AdminStudents() {
         const userRole = localStorage.getItem("userRole");
 
         if (!adminData || !token || !["fee_manager", "admin"].includes(userRole)) {
-          navigate(role === "admin" ? "/login" : "/login");
+          navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
           return;
         }
 
@@ -93,7 +93,7 @@ export default function AdminStudents() {
         localStorage.removeItem("adminData");
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
-        navigate(role === "admin" ? "/login" : "/login");
+        navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
     };
 
     const handleAddStudent = async (e) => {
@@ -201,8 +201,8 @@ export default function AdminStudents() {
         }
     };
 
-    const handleDeactivate = async (student) => {
-        if (!window.confirm("Deactivate this student account?")) return;
+    const handleDelete = async (student) => {
+        if (!window.confirm("Delete this student account and all related data? This cannot be undone.")) return;
         const token = localStorage.getItem("token");
         try {
             await axios.delete(`http://localhost:5001/api/students/${student.id}`, {
@@ -210,7 +210,7 @@ export default function AdminStudents() {
             });
             fetchStudents(token, role);
         } catch (err) {
-            alert(err.response?.data?.message || "Error deactivating student");
+            alert(err.response?.data?.message || "Error deleting student");
         }
     };
 
@@ -229,7 +229,7 @@ export default function AdminStudents() {
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate(role === "admin" ? "/admin-dashboard" : "/fee-manager-dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "http://localhost:5001/admin/dashboard" : "http://localhost:5001/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3">
@@ -362,7 +362,8 @@ export default function AdminStudents() {
 
                 {/* Students Table */}
                 <div className="bg-white rounded-2xl shadow-sm border border-[#f1f2f6] overflow-hidden">
-                    <table className="w-full text-left border-collapse">
+                    <div className="table-scroll-wrapper">
+                        <table className="w-full text-left border-collapse table-sticky-header">
                         <thead className="bg-[#f8f9fa] border-b border-[#e1e2e6]">
                             <tr>
                                 {role === "admin" ? (
@@ -452,12 +453,14 @@ export default function AdminStudents() {
                                                     >
                                                         {student.is_active ? "Disable" : "Enable"}
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeactivate(student)}
-                                                        className="px-3 py-1 text-xs rounded-lg border border-[#dcdde1] hover:bg-[#f5f6fa]"
-                                                    >
-                                                        Deactivate
-                                                    </button>
+                                                    {role === "admin" && (
+                                                        <button
+                                                            onClick={() => handleDelete(student)}
+                                                            className="px-3 py-1 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </>
                                         ) : (
@@ -504,6 +507,7 @@ export default function AdminStudents() {
                             )}
                         </tbody>
                     </table>
+                    </div>
                     <div className="p-4 border-t border-[#e1e2e6] flex justify-between items-center text-xs text-[#5a6c7d]">
                         <p>Showing {students.length} of {total} entries</p>
                         <div className="flex gap-2">

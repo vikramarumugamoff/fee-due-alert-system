@@ -1,48 +1,66 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 
 export default function Login() {
-  const [role, setRole] = useState("student"); // 'student' | 'fee_manager' | 'admin'
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
+      // auto-detect role so admins/fee managers don't get treated as students
+      let role = "student";
+      const idLower = (identifier || "").toLowerCase();
+      if (idLower === "admin@bitsathy.ac.in") {
+        role = "admin";
+      } else if (idLower === "feemanager@bitsathy.ac.in" || idLower.includes("fee")) {
+        role = "fee_manager";
+      }
+
       const res = await axios.post("http://localhost:5001/login", {
-        email,
+        identifier,
+        email: identifier, // keep backward compatibility with previous API shape
         password,
         role,
       });
 
-      alert(res.data.message);
-      console.log(res.data);
+      role = res.data.role || role || "student";
+      alert(res.data.message || "Login success");
 
-      // Save token to localStorage
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
-        localStorage.setItem("userRole", role);
       }
+      localStorage.setItem("userRole", role);
 
-      // Save user data and navigate based on role
       if (role === "student") {
-        localStorage.setItem("studentData", JSON.stringify({
-          name: res.data.name || email.split("@")[0],
-          email: email,
-          student_id: res.data.student_id,
-          department: res.data.department,
-          phone: res.data.phone
-        }));
-        navigate("/student-dashboard");
+        localStorage.setItem(
+          "studentData",
+          JSON.stringify({
+            name: res.data.name || (identifier?.split?.("@")[0] || "Student"),
+            email: res.data.email,
+            student_id: res.data.student_id,
+            department: res.data.department,
+            phone: res.data.phone,
+            year: res.data.year,
+            semester: res.data.semester,
+          })
+        );
+        navigate("/student/dashboard");
       } else if (role === "fee_manager" || role === "admin") {
-        localStorage.setItem("adminData", JSON.stringify({
-          name: res.data.name || email.split("@")[0],
-          email: email,
-        }));
-        navigate(role === "fee_manager" ? "/fee-manager-dashboard" : "/admin-dashboard");
+        localStorage.setItem(
+          "adminData",
+          JSON.stringify({
+            name: res.data.name || "Administrator",
+            email: res.data.email || identifier,
+            role,
+          })
+        );
+        navigate(role === "fee_manager" ? "/fee-manager/dashboard" : "/admin/dashboard");
+      } else {
+        navigate("/login");
       }
     } catch (err) {
       alert(err?.response?.data?.message || "Login failed");
@@ -63,55 +81,18 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-center text-[#273c75] mb-1 font-montserrat">Fee Due Alert System</h1>
           <p className="text-center text-[#5a6c7d] mb-8 text-xs">Official College Portal</p>
 
-          {/* Role Selector */}
-          <div className="bg-[#f5f6fa] p-2 rounded-xl mb-8 flex gap-2 w-full border border-[#dcdde1]">
-            <button
-              onClick={() => setRole("student")}
-              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "student"
-                ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
-                : "text-[#5a6c7d] hover:text-[#273c75]"
-                }`}
-            >
-              Student Portal
-            </button>
-            <button
-              onClick={() => setRole("fee_manager")}
-              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "fee_manager"
-                ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
-                : "text-[#5a6c7d] hover:text-[#273c75]"
-                }`}
-            >
-              Fee Manager
-            </button>
-            <button
-              onClick={() => setRole("admin")}
-              className={`px-4 py-3 rounded-lg text-xs font-bold w-1/3 transition-all duration-300 ${role === "admin"
-                ? "bg-white text-[#273c75] shadow-md border-2 border-[#273c75] transform scale-105"
-                : "text-[#5a6c7d] hover:text-[#273c75]"
-                }`}
-            >
-              Admin
-            </button>
-          </div>
-
           {/* Form */}
           <div className="w-full spacey-4">
             <div className="mb-5">
               <label className="text-xs font-semibold text-[#273c75] font-montserrat">
-                {role === "student" ? "Student ID or Email" : role === "fee_manager" ? "Fee Manager ID" : "Admin ID"}
+                Email or ID
               </label>
               <input
                 type="text"
-                placeholder={
-                  role === "student"
-                    ? "e.g. 7376231SE... or email"
-                    : role === "fee_manager"
-                      ? "feemanager@bitsathy.ac.in"
-                      : "admin@bitsathy.ac.in"
-                }
+                placeholder="e.g. student email, student ID, or admin email"
                 className="input-field mt-2 text-sm"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
               />
             </div>
 
@@ -142,14 +123,6 @@ export default function Login() {
             >
               Login
             </button>
-
-            {role === "student" && (
-              <Link to="/signup">
-                <button className="w-full bg-white border-2 border-[#273c75] text-[#273c75] py-3 rounded-xl font-bold hover:bg-[#273c75] hover:text-white transition-all duration-300 transform hover:scale-105 text-sm">
-                  Register New Account
-                </button>
-              </Link>
-            )}
 
             <p className="text-xs text-center text-[#5a6c7d] mt-6 font-montserrat">
               Secure administrative system. Unauthorized access is prohibited and monitored.

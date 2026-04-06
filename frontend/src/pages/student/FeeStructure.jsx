@@ -115,7 +115,7 @@ export default function FeeStructure() {
   const handleNavigation = (page) => {
     setActiveTab(page);
     if (page === "dashboard") {
-      navigate("/student-dashboard");
+      navigate("/student/dashboard");
     } else if (page === "paymentHistory") {
       navigate("/student/payment-history");
     } else if (page === "profile") {

@@ -31,6 +31,38 @@ ALTER TABLE admins
 
 ALTER TABLE students
   ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+-- Alert tracking
+ALTER TABLE students
+  ADD COLUMN IF NOT EXISTS alert_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_alert_sent TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS alerts (
+  id SERIAL PRIMARY KEY,
+  student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  message TEXT,
+  sent_by INTEGER,
+  sent_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Bulk alert audit log
+CREATE TABLE IF NOT EXISTS alert_log (
+  alert_id SERIAL PRIMARY KEY,
+  student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  alert_sent_by INTEGER REFERENCES admins(id),
+  alert_date TIMESTAMP NOT NULL DEFAULT NOW(),
+  filter_used TEXT
+);
+
+-- In-app notifications for students
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL DEFAULT 'Fee Alert',
+  message TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  is_read BOOLEAN NOT NULL DEFAULT FALSE
+);
 
 -- Sessions table to store active tokens (optional session store)
 CREATE TABLE IF NOT EXISTS sessions (
