@@ -63,7 +63,7 @@ export default function Signup({ inline = false }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:5001/signup", {
+      const res = await axios.post("/signup", {
         fullName: form.fullName,
         studentId: form.studentId,
         department: form.department,

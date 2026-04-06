@@ -30,7 +30,7 @@ export default function FeeStructure() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get("/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -53,7 +53,7 @@ export default function FeeStructure() {
 
   const fetchFeeStructure = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5001/student/fee-structure/${email}?_=${Date.now()}`, {
+      const res = await axios.get(`/student/fee-structure/${email}?_=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Cache-Control": "no-cache",
@@ -71,7 +71,7 @@ export default function FeeStructure() {
   const fetchCompletedSemesters = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.get(`http://localhost:5001/student/completed-semesters/${student.email}`, {
+      const res = await axios.get(`/student/completed-semesters/${student.email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCompletedSemesters(res.data);
@@ -87,7 +87,7 @@ export default function FeeStructure() {
     const token = localStorage.getItem("token");
     try {
       const response = await axios.get(
-        `http://localhost:5001/student/download-receipt/${student.email}/${selectedReceipt.year}/${selectedReceipt.semester}`,
+        `/student/download-receipt/${student.email}/${selectedReceipt.year}/${selectedReceipt.semester}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

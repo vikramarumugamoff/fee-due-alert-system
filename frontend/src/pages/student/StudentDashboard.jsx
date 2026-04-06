@@ -30,7 +30,7 @@ export default function StudentDashboard() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get("/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -51,7 +51,7 @@ export default function StudentDashboard() {
 
   const fetchNotifications = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/student/notifications", {
+      const res = await axios.get("/student/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(res.data?.notifications || []);
@@ -63,7 +63,7 @@ export default function StudentDashboard() {
 
   const fetchStudentFeeData = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5001/student/fees/${email}`, {
+      const res = await axios.get(`/student/fees/${email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -77,7 +77,7 @@ export default function StudentDashboard() {
 
 
       const historyRes = await axios.get(
-        `http://localhost:5001/student/payment-history/${email}`,
+        `/student/payment-history/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -56,7 +56,7 @@ export default function AdminStudents() {
         const userRole = localStorage.getItem("userRole");
 
         if (!adminData || !token || !["fee_manager", "admin"].includes(userRole)) {
-          navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
+          navigate(role === "admin" ? "/login" : "/login");
           return;
         }
 
@@ -75,7 +75,7 @@ export default function AdminStudents() {
             params.append("page", page.toString());
             params.append("limit", limit.toString());
 
-            const endpoint = currentRole === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            const endpoint = currentRole === "admin" ? "/api/students" : "/admin/students";
             const res = await axios.get(`${endpoint}?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -93,14 +93,14 @@ export default function AdminStudents() {
         localStorage.removeItem("adminData");
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
-        navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
+        navigate(role === "admin" ? "/login" : "/login");
     };
 
     const handleAddStudent = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            const endpoint = role === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            const endpoint = role === "admin" ? "/api/students" : "/admin/students";
             await axios.post(endpoint, newStudent, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -117,7 +117,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.put(`http://localhost:5001/admin/students/${selectedStudent.id}/due-date`, {
+            await axios.put(`/admin/students/${selectedStudent.id}/due-date`, {
                 dueDate: editDueDate
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -153,7 +153,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.put(`http://localhost:5001/api/students/${editStudent.id}`, {
+            await axios.put(`/api/students/${editStudent.id}`, {
                 fullName: editStudent.fullName,
                 email: editStudent.email,
                 phone: editStudent.phone,
@@ -174,7 +174,7 @@ export default function AdminStudents() {
     const handleToggleStatus = async (student) => {
         const token = localStorage.getItem("token");
         try {
-            await axios.patch(`http://localhost:5001/api/students/${student.id}/status`, {
+            await axios.patch(`/api/students/${student.id}/status`, {
                 is_active: !student.is_active
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -190,7 +190,7 @@ export default function AdminStudents() {
         if (!newPassword) return;
         const token = localStorage.getItem("token");
         try {
-            await axios.patch(`http://localhost:5001/api/students/${student.id}/reset-password`, {
+            await axios.patch(`/api/students/${student.id}/reset-password`, {
                 password: newPassword
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -205,7 +205,7 @@ export default function AdminStudents() {
         if (!window.confirm("Delete this student account and all related data? This cannot be undone.")) return;
         const token = localStorage.getItem("token");
         try {
-            await axios.delete(`http://localhost:5001/api/students/${student.id}`, {
+            await axios.delete(`/api/students/${student.id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchStudents(token, role);
@@ -229,7 +229,7 @@ export default function AdminStudents() {
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate(role === "admin" ? "http://localhost:5001/admin/dashboard" : "http://localhost:5001/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "/admin/dashboard" : "/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3">

@@ -33,7 +33,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/dashboard-stats", {
+      const res = await axios.get("/admin/dashboard-stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStats(res.data);

@@ -35,7 +35,7 @@ export default function AdminAcademicStructure() {
 
   const fetchAcademicStructure = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/academic-structure", {
+      const res = await axios.get("/admin/academic-structure", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(res.data || []);
@@ -69,12 +69,12 @@ export default function AdminAcademicStructure() {
     const token = localStorage.getItem("token");
     try {
       if (editing) {
-        await axios.put(`http://localhost:5001/admin/academic-structure/${editing.id}`, form, {
+        await axios.put(`/admin/academic-structure/${editing.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Academic structure updated.");
       } else {
-        await axios.post("http://localhost:5001/admin/academic-structure", form, {
+        await axios.post("/admin/academic-structure", form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Academic structure added.");
@@ -100,7 +100,7 @@ export default function AdminAcademicStructure() {
     const token = localStorage.getItem("token");
     if (!window.confirm("Delete this academic record?")) return;
     try {
-      await axios.delete(`http://localhost:5001/admin/academic-structure/${id}`, {
+      await axios.delete(`/admin/academic-structure/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchAcademicStructure(token);

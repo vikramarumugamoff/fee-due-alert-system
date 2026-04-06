@@ -20,7 +20,7 @@ export default function Login() {
         role = "fee_manager";
       }
 
-      const res = await axios.post("http://localhost:5001/login", {
+      const res = await axios.post("/login", {
         identifier,
         email: identifier, // keep backward compatibility with previous API shape
         password,

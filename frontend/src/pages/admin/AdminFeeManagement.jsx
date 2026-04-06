@@ -69,7 +69,7 @@ export default function AdminFeeManagement() {
 
     const fetchFeeData = async (token) => {
         try {
-            const res = await axios.get("http://localhost:5001/admin/fee-management", {
+            const res = await axios.get("/admin/fee-management", {
                 params: { search, department, status, page, limit },
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -85,7 +85,7 @@ export default function AdminFeeManagement() {
 
     const fetchStats = async (token) => {
         try {
-            const res = await axios.get("http://localhost:5001/admin/fee-stats", {
+            const res = await axios.get("/admin/fee-stats", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setStats(res.data);
@@ -99,7 +99,7 @@ export default function AdminFeeManagement() {
         if (!token) return;
         setBulkPreview((prev) => ({ ...prev, loading: true }));
         try {
-            const res = await axios.post("http://localhost:5001/admin/bulk-alert/preview", {
+            const res = await axios.post("/admin/bulk-alert/preview", {
                 ...bulkFilters
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +117,7 @@ export default function AdminFeeManagement() {
         if (!token) return;
         setSendingBulk(true);
         try {
-            const res = await axios.post("http://localhost:5001/admin/bulk-alert/send", {
+            const res = await axios.post("/admin/bulk-alert/send", {
                 ...bulkFilters,
                 message: bulkMessage
             }, {
@@ -147,7 +147,7 @@ export default function AdminFeeManagement() {
         if (!proceed) return;
 
         try {
-            const res = await axios.post("http://localhost:5001/admin/send-alert", {
+            const res = await axios.post("/admin/send-alert", {
                 email: student.email,
                 dueDate: student.due_date,
                 message: `Manual reminder for ${student.full_name}`
@@ -175,7 +175,7 @@ export default function AdminFeeManagement() {
     const handleHistory = async (student) => {
         const token = localStorage.getItem("token");
         try {
-            const res = await axios.get(`http://localhost:5001/admin/students/${student.id}/alerts`, {
+            const res = await axios.get(`/admin/students/${student.id}/alerts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setHistory(res.data.alerts || []);
@@ -269,7 +269,7 @@ export default function AdminFeeManagement() {
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate(role === "admin" ? "http://localhost:5001/admin/dashboard" : "http://localhost:5001/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "/admin/dashboard" : "/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button

@@ -33,7 +33,7 @@ export default function PaymentPortal() {
 
   const fetchStudentFeeData = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5001/student/fees/${email}`, {
+      const res = await axios.get(`/student/fees/${email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFeeData(res.data);
@@ -65,7 +65,7 @@ export default function PaymentPortal() {
     try {
       const token = localStorage.getItem("token");
       
-      const res = await axios.post("http://localhost:5001/student/pay-fee", {
+      const res = await axios.post("/student/pay-fee", {
         email: student.email,
         amount: parseFloat(amount),
         paymentMethod: paymentMethod,

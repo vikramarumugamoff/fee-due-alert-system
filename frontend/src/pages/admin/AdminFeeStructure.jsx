@@ -37,7 +37,7 @@ export default function AdminFeeStructure() {
 
   const fetchFeeStructure = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/fee-structure", {
+      const res = await axios.get("/admin/fee-structure", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(res.data || []);
@@ -73,12 +73,12 @@ export default function AdminFeeStructure() {
     const token = localStorage.getItem("token");
     try {
       if (editing) {
-        await axios.put(`http://localhost:5001/admin/fee-structure/${editing.id}`, form, {
+        await axios.put(`/admin/fee-structure/${editing.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Fee structure updated.");
       } else {
-        await axios.post("http://localhost:5001/admin/fee-structure", form, {
+        await axios.post("/admin/fee-structure", form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Fee structure added.");
@@ -106,7 +106,7 @@ export default function AdminFeeStructure() {
     const token = localStorage.getItem("token");
     if (!window.confirm("Delete this fee structure?")) return;
     try {
-      await axios.delete(`http://localhost:5001/admin/fee-structure/${id}`, {
+      await axios.delete(`/admin/fee-structure/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchFeeStructure(token);

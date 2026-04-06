@@ -35,7 +35,7 @@ export default function AdminUsers() {
 
   const fetchUsers = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/users", {
+      const res = await axios.get("/admin/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data || []);
@@ -58,7 +58,7 @@ export default function AdminUsers() {
     setMessage("");
     const token = localStorage.getItem("token");
     try {
-      await axios.post("http://localhost:5001/admin/users", form, {
+      await axios.post("/admin/users", form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setForm({ name: "", email: "", role: "admin", password: "" });
@@ -73,7 +73,7 @@ export default function AdminUsers() {
     const token = localStorage.getItem("token");
     try {
       await axios.put(
-        `http://localhost:5001/admin/users/${user.id}/status`,
+        `/admin/users/${user.id}/status`,
         { is_active: !user.is_active },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -89,7 +89,7 @@ export default function AdminUsers() {
     const token = localStorage.getItem("token");
     try {
       await axios.put(
-        `http://localhost:5001/admin/users/${user.id}/password`,
+        `/admin/users/${user.id}/password`,
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );

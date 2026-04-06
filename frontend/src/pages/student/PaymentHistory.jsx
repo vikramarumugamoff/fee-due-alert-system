@@ -28,7 +28,7 @@ export default function PaymentHistory() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get("/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -50,7 +50,7 @@ export default function PaymentHistory() {
   const fetchPaymentHistory = async (email, token) => {
     try {
       const res = await axios.get(
-        `http://localhost:5001/student/payment-history/${email}`,
+        `/student/payment-history/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -47,7 +47,7 @@ export default function StudentProfile() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get("/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
