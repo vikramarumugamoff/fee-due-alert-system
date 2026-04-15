@@ -71,7 +71,7 @@ export default function SystemAdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5f6fa] flex">
-      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
+      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-50">
         <div className="p-6 border-b border-[#f1f2f6]">
           <div className="flex items-center gap-3">
             <BrandLogo size={40} />
@@ -84,7 +84,7 @@ export default function SystemAdminDashboard() {
 
         <nav className="p-4 space-y-2">
           <button
-            onClick={() => navigate("/admin-dashboard")}
+            onClick={() => navigate("/admin/dashboard")}
             className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
           >
             <span className="w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-xs font-bold">DB</span>

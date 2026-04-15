@@ -56,7 +56,7 @@ export default function AdminStudents() {
         const userRole = localStorage.getItem("userRole");
 
         if (!adminData || !token || !["fee_manager", "admin"].includes(userRole)) {
-          navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
+          navigate("/login");
           return;
         }
 
@@ -93,7 +93,7 @@ export default function AdminStudents() {
         localStorage.removeItem("adminData");
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
-        navigate(role === "admin" ? "http://localhost:5001/login" : "http://localhost:5001/login");
+        navigate("/login");
     };
 
     const handleAddStudent = async (e) => {
@@ -217,7 +217,7 @@ export default function AdminStudents() {
     return (
         <div className="min-h-screen bg-[#f5f6fa] flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
+            <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-50">
                 <div className="p-6 border-b border-[#f1f2f6]">
                     <div className="flex items-center gap-3">
                         <BrandLogo size={40} />
@@ -229,7 +229,7 @@ export default function AdminStudents() {
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate(role === "admin" ? "http://localhost:5001/admin/dashboard" : "http://localhost:5001/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "/admin/dashboard" : "/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3">

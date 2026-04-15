@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import PortalLayout from "../../components/PortalLayout";
+import { StudentSidebar } from "../../components/Sidebars";
 
 export default function StudentDashboard() {
   const [student, setStudent] = useState(null);
@@ -133,98 +135,21 @@ export default function StudentDashboard() {
     );
   }
 
+  const sidebarContent = <StudentSidebar student={student} onLogout={handleLogout} />;
+
   return (
-    <div className="min-h-screen bg-[#f5f6fa] flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10 transition-all duration-300">
-        <div className="p-6 border-b border-[#f1f2f6]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#273c75] rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
-              F
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-[#273c75] font-montserrat">Fee Due</h2>
-              <p className="text-xs text-slate-400">Student Portal</p>
-            </div>
-          </div>
+    <PortalLayout sidebar={sidebarContent} onLogout={handleLogout}>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-[#273c75] font-montserrat">
+            Welcome back, {student ? student.name.split(' ')[0] : 'Student'}
+          </h1>
+          <p className="text-[#5a6c7d] text-sm mt-1">
+            Here is your fee status overview.
+          </p>
         </div>
-
-        <nav className="p-4 space-y-2">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${activeTab === "dashboard"
-              ? "bg-[#273c75] text-white shadow-md"
-              : "text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75]"
-              }`}
-          >
-            <span>📊</span> Dashboard
-          </button>
-          <button
-            onClick={() => handleNavigation("feeStructure")}
-            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${activeTab === "feeStructure"
-              ? "bg-[#273c75] text-white shadow-md"
-              : "text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75]"
-              }`}
-          >
-            <span>📋</span> Fee Structure
-          </button>
-          <button
-            onClick={() => handleNavigation("paymentHistory")}
-            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${activeTab === "paymentHistory"
-              ? "bg-[#273c75] text-white shadow-md"
-              : "text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75]"
-              }`}
-          >
-            <span>⏱️</span> Payment History
-          </button>
-          <button
-            onClick={() => handleNavigation("profile")}
-            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${activeTab === "profile"
-              ? "bg-[#273c75] text-white shadow-md"
-              : "text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75]"
-              }`}
-          >
-            <span>👤</span> My Profile
-          </button>
-        </nav>
-
-        {student && (
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="flex items-center gap-3 mb-4 p-3 bg-[#f8f9fa] rounded-xl border border-[#e1e2e6] hover:shadow-sm transition-all duration-300">
-              <div className="w-10 h-10 bg-[#273c75] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                {student.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="overflow-hidden">
-                <p className="font-semibold text-xs text-[#273c75] truncate">{student.name}</p>
-                <p className="text-xs text-[#5a6c7d] truncate">{student.rollNumber || "Student"}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full bg-white border border-[#dcdde1] hover:bg-[#f5f6fa] text-[#273c75] text-xs font-semibold py-2.5 rounded-lg transition-all duration-300"
-            >
-              Logout
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content */}
-      <main className="ml-64 w-full p-8 transition-all duration-300">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-[#273c75] font-montserrat">
-              Welcome back, {student ? student.name.split(' ')[0] : 'Student'}
-            </h1>
-            <p className="text-[#5a6c7d] text-sm mt-1">
-              Here is your fee status overview.
-            </p>
-          </div>
-          <div className="flex gap-4">
-            {/* Icons removed as per user request */}
-          </div>
-        </div>
+      </div>
 
         {/* Stats Cards */}
         {feeData && (
@@ -402,8 +327,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Receipt Selection Modal */}
-      </main>
-    </div>
+    </PortalLayout>
   );
 }
 

@@ -1,19 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaCheckCircle, FaPrint, FaArrowRight } from "react-icons/fa";
 import jsPDF from "jspdf";
+import PortalLayout from "../../components/PortalLayout";
+import { StudentSidebar } from "../../components/Sidebars";
 
 export default function PaymentReceipt() {
   const location = useLocation();
   const navigate = useNavigate();
   const paymentData = location.state;
+  const [student, setStudent] = useState(null);
 
   useEffect(() => {
+    // Get student data from localStorage
+    const studentData = localStorage.getItem("studentData");
+    if (studentData) {
+      setStudent(JSON.parse(studentData));
+    }
+    
     // If user accesses this page directly without payment data, redirect them
     if (!paymentData) {
       navigate("/student/dashboard");
     }
   }, [paymentData, navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("studentData");
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   if (!paymentData) return null;
 

@@ -30,6 +30,7 @@ export default function App() {
         <Route path="/student/payment" element={<PaymentPortal />} />
         <Route path="/student/receipt" element={<PaymentReceipt />} />
         <Route path="/fee-manager/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-dashboard" element={<SystemAdminDashboard />} />
         <Route path="/admin/dashboard" element={<SystemAdminDashboard />} />
         <Route path="/admin/students" element={<AdminStudents />} />
         <Route path="/admin/fee-management" element={<AdminFeeManagement />} />

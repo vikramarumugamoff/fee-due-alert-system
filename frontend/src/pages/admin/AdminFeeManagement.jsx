@@ -49,7 +49,7 @@ export default function AdminFeeManagement() {
         }
 
         if (userRole === "admin") {
-            navigate("/admin-dashboard");
+            navigate("/admin/dashboard");
             return;
         }
 
@@ -255,9 +255,9 @@ export default function AdminFeeManagement() {
 
     return (
         <>
-        <div className="min-h-screen bg-[#f5f6fa] flex">
+        <div className="min-h-screen bg-[#f5f6fa]">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10 transition-all duration-300">
+            <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-50 transition-all duration-300">
                 <div className="p-6 border-b border-[#f1f2f6]">
                     <div className="flex items-center gap-3">
                         <BrandLogo size={40} />
@@ -269,7 +269,7 @@ export default function AdminFeeManagement() {
                 </div>
 
                 <nav className="p-4 space-y-2">
-                    <button onClick={() => navigate(role === "admin" ? "http://localhost:5001/admin/dashboard" : "http://localhost:5001/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
+                    <button onClick={() => navigate(role === "admin" ? "/admin/dashboard" : "/fee-manager/dashboard")} className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3">
                         <span>📊</span> Dashboard
                     </button>
                     <button
@@ -306,8 +306,8 @@ export default function AdminFeeManagement() {
             </aside>
 
             {/* Main Content */}
-            <main className="ml-64 w-full p-8 transition-all duration-300">
-                <div className="sticky top-0 z-20 -mx-8 px-8 pb-4 bg-[#f5f6fa]">
+            <main className="ml-64 p-8 transition-all duration-300">
+                <div className="sticky top-0 z-20 pb-4 bg-[#f5f6fa]">
                     <div className="flex justify-between items-center mb-1">
                         <div>
                             <h1 className="text-2xl font-bold text-[#273c75] font-montserrat">

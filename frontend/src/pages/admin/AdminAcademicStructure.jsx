@@ -110,8 +110,8 @@ export default function AdminAcademicStructure() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f6fa] flex">
-      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
+    <div className="min-h-screen bg-[#f5f6fa]">
+      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-50">
         <div className="p-6 border-b border-[#f1f2f6]">
           <div className="flex items-center gap-3">
             <BrandLogo size={40} />
@@ -124,7 +124,7 @@ export default function AdminAcademicStructure() {
 
         <nav className="p-4 space-y-2">
           <button
-            onClick={() => navigate("/admin-dashboard")}
+            onClick={() => navigate("/admin/dashboard")}
             className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
           >
             <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">DB</span>
@@ -183,7 +183,7 @@ export default function AdminAcademicStructure() {
         )}
       </aside>
 
-      <main className="ml-64 w-full p-8">
+      <main className="ml-64 p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#273c75] font-montserrat">

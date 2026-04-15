@@ -74,7 +74,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#f5f6fa] flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-10">
+      <aside className="w-64 bg-white border-r border-[#dcdde1] fixed h-screen z-50">
         <div className="p-6 border-b border-[#f1f2f6]">
           <div className="flex items-center gap-3">
             <BrandLogo size={40} />

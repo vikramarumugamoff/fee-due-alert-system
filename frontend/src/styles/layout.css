@@ -1,0 +1,220 @@
+/**
+ * Global Portal Layout CSS
+ * Ensures consistent layout across all portals with no overlap
+ */
+
+/* ========================
+   APP LAYOUT CONTAINER
+   ======================== */
+
+.app-layout {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  background-color: #f5f6fa;
+  overflow: hidden;
+}
+
+/* ========================
+   SIDEBAR STYLES
+   ======================== */
+
+.app-sidebar {
+  width: 256px; /* w-64 = 16 * 16px = 256px */
+  height: 100vh;
+  background-color: white;
+  border-right: 1px solid #dcdde1;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Desktop: Sidebar always visible */
+@media (min-width: 1024px) {
+  .app-sidebar {
+    transform: translateX(0);
+    position: fixed;
+  }
+
+  .app-sidebar.closed {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile: Sidebar slides from left */
+@media (max-width: 1023px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+    position: fixed;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ========================
+   MAIN CONTENT AREA
+   ======================== */
+
+.app-main-content {
+  display: block;
+  margin-left: 256px;
+  background-color: #f5f6fa;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Mobile: No left margin */
+@media (max-width: 1023px) {
+  .app-main-content {
+    margin-left: 0;
+  }
+}
+
+/* ========================
+   CONTENT WRAPPER
+   ======================== */
+
+.app-content-wrapper {
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 32px; /* p-8 = 2rem = 32px */
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .app-content-wrapper {
+    padding: 16px; /* p-4 on mobile */
+  }
+}
+
+/* ========================
+   MOBILE SIDEBAR TOGGLE
+   ======================== */
+
+.app-sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border: 1px solid #dcdde1;
+  border-radius: 8px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.app-sidebar-toggle:hover {
+  background-color: #f5f6fa;
+}
+
+/* Mobile: Show toggle button */
+@media (max-width: 1023px) {
+  .app-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ========================
+   MOBILE OVERLAY
+   ======================== */
+
+.app-layout-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 30;
+}
+
+@media (max-width: 1023px) {
+  .app-layout-overlay {
+    display: block;
+  }
+}
+
+/* ========================
+   SCROLLBAR STYLING
+   ======================== */
+
+.app-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-main-content::-webkit-scrollbar-track {
+  background: #f5f6fa;
+}
+
+.app-main-content::-webkit-scrollbar-thumb {
+  background: #e1e2e6;
+  border-radius: 4px;
+}
+
+.app-main-content::-webkit-scrollbar-thumb:hover {
+  background: #c1c2c6;
+}
+
+/* ========================
+   TABLES & LONG CONTENT
+   ======================== */
+
+.app-content-wrapper > div {
+  width: 100%;
+}
+
+/* Ensure tables don't overflow */
+.app-content-wrapper table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+  .app-content-wrapper {
+    overflow-x: hidden;
+  }
+
+  .app-content-wrapper > div {
+    overflow-x: auto;
+  }
+}
+
+/* ========================
+   STICKY HEADERS
+   ======================== */
+
+.app-sticky-header {
+  position: sticky;
+  top: 0;
+  background-color: #f5f6fa;
+  z-index: 10;
+}
+
+/* ========================
+   UTILITY CLASSES
+   ======================== */
+
+.app-full-width {
+  width: 100%;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
