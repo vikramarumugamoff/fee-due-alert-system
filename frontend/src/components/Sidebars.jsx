@@ -8,8 +8,10 @@ export function StudentSidebar({ student, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
   const getBtnClass = (path) => 
-    location.pathname.startsWith(path)
+    isActive(path)
       ? "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
       : "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3";
 
@@ -96,13 +98,15 @@ export function AdminSidebar({ admin, role, onLogout }) {
   const location = useLocation();
   const isFeeManager = role === "fee_manager";
 
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
   const getBtnClass = (path) => 
-    location.pathname.startsWith(path)
+    isActive(path)
       ? "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
       : "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3";
 
   const getIconClass = (path) =>
-    location.pathname.startsWith(path)
+    isActive(path)
       ? "w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-[10px] font-bold text-white"
       : "w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]";
 
