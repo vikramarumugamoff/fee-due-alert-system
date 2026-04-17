@@ -1,6 +1,6 @@
 require("dotenv").config();
 const {Pool}=require("pg");
-const pool=new Pool({user:process.env.DB_USER,host:process.env.DB_HOST,database:process.env.DB_NAME,password:String(process.env.DB_PASS),port:process.env.DB_PORT});
+const pool=new Pool({user:process.env.DB_USER,host:process.env.DB_HOST,database:process.env.DB_NAME,password:String(process.env.DB_PASS),port:process.env.DB_PORT,ssl:{rejectUnauthorized:false}});
 (async()=>{
   const academicYear = process.env.ACADEMIC_YEAR || '2024-25';
   const perSemesterIncrease = Number.parseFloat(process.env.SEMESTER_FEE_INCREMENT || '5000') || 5000;
