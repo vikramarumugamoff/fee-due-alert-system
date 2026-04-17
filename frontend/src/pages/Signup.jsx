@@ -3,6 +3,8 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function Signup({ inline = false }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -63,7 +65,7 @@ export default function Signup({ inline = false }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:5001/signup", {
+      const res = await axios.post(`${API_BASE_URL}/signup`, {
         fullName: form.fullName,
         studentId: form.studentId,
         department: form.department,

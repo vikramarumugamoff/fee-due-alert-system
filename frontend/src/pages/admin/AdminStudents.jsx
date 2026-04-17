@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BrandLogo from "../../components/BrandLogo";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function AdminStudents() {
     const [admin, setAdmin] = useState(null);
     const [role, setRole] = useState("");
@@ -75,7 +77,7 @@ export default function AdminStudents() {
             params.append("page", page.toString());
             params.append("limit", limit.toString());
 
-            const endpoint = currentRole === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            const endpoint = currentRole === "admin" ? `${API_BASE_URL}/api/students` : `${API_BASE_URL}/admin/students`;
             const res = await axios.get(`${endpoint}?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -100,7 +102,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            const endpoint = role === "admin" ? "http://localhost:5001/api/students" : "http://localhost:5001/admin/students";
+            const endpoint = role === "admin" ? `${API_BASE_URL}/api/students` : `${API_BASE_URL}/admin/students`;
             await axios.post(endpoint, newStudent, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -117,7 +119,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.put(`http://localhost:5001/admin/students/${selectedStudent.id}/due-date`, {
+            await axios.put(`${API_BASE_URL}/admin/students/${selectedStudent.id}/due-date`, {
                 dueDate: editDueDate
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -153,7 +155,7 @@ export default function AdminStudents() {
         e.preventDefault();
         const token = localStorage.getItem("token");
         try {
-            await axios.put(`http://localhost:5001/api/students/${editStudent.id}`, {
+            await axios.put(`${API_BASE_URL}/api/students/${editStudent.id}`, {
                 fullName: editStudent.fullName,
                 email: editStudent.email,
                 phone: editStudent.phone,
@@ -174,7 +176,7 @@ export default function AdminStudents() {
     const handleToggleStatus = async (student) => {
         const token = localStorage.getItem("token");
         try {
-            await axios.patch(`http://localhost:5001/api/students/${student.id}/status`, {
+            await axios.patch(`${API_BASE_URL}/api/students/${student.id}/status`, {
                 is_active: !student.is_active
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -190,7 +192,7 @@ export default function AdminStudents() {
         if (!newPassword) return;
         const token = localStorage.getItem("token");
         try {
-            await axios.patch(`http://localhost:5001/api/students/${student.id}/reset-password`, {
+            await axios.patch(`${API_BASE_URL}/api/students/${student.id}/reset-password`, {
                 password: newPassword
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -205,7 +207,7 @@ export default function AdminStudents() {
         if (!window.confirm("Delete this student account and all related data? This cannot be undone.")) return;
         const token = localStorage.getItem("token");
         try {
-            await axios.delete(`http://localhost:5001/api/students/${student.id}`, {
+            await axios.delete(`${API_BASE_URL}/api/students/${student.id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchStudents(token, role);

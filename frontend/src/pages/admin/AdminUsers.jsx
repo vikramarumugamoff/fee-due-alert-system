@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BrandLogo from "../../components/BrandLogo";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function AdminUsers() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
@@ -35,7 +37,7 @@ export default function AdminUsers() {
 
   const fetchUsers = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/users", {
+      const res = await axios.get(`${API_BASE_URL}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data || []);
@@ -58,7 +60,7 @@ export default function AdminUsers() {
     setMessage("");
     const token = localStorage.getItem("token");
     try {
-      await axios.post("http://localhost:5001/admin/users", form, {
+      await axios.post(`${API_BASE_URL}/admin/users`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setForm({ name: "", email: "", role: "admin", password: "" });
@@ -73,7 +75,7 @@ export default function AdminUsers() {
     const token = localStorage.getItem("token");
     try {
       await axios.put(
-        `http://localhost:5001/admin/users/${user.id}/status`,
+        `${API_BASE_URL}/admin/users/${user.id}/status`,
         { is_active: !user.is_active },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -89,7 +91,7 @@ export default function AdminUsers() {
     const token = localStorage.getItem("token");
     try {
       await axios.put(
-        `http://localhost:5001/admin/users/${user.id}/password`,
+        `${API_BASE_URL}/admin/users/${user.id}/password`,
         { password: newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );

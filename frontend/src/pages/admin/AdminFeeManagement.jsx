@@ -5,6 +5,8 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function AdminFeeManagement() {
     const [feeData, setFeeData] = useState([]);
     const [admin, setAdmin] = useState(null);
@@ -69,7 +71,7 @@ export default function AdminFeeManagement() {
 
     const fetchFeeData = async (token) => {
         try {
-            const res = await axios.get("http://localhost:5001/admin/fee-management", {
+            const res = await axios.get(`${API_BASE_URL}/admin/fee-management`, {
                 params: { search, department, status, page, limit },
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -85,7 +87,7 @@ export default function AdminFeeManagement() {
 
     const fetchStats = async (token) => {
         try {
-            const res = await axios.get("http://localhost:5001/admin/fee-stats", {
+            const res = await axios.get(`${API_BASE_URL}/admin/fee-stats`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setStats(res.data);
@@ -99,7 +101,7 @@ export default function AdminFeeManagement() {
         if (!token) return;
         setBulkPreview((prev) => ({ ...prev, loading: true }));
         try {
-            const res = await axios.post("http://localhost:5001/admin/bulk-alert/preview", {
+            const res = await axios.post(`${API_BASE_URL}/admin/bulk-alert/preview`, {
                 ...bulkFilters
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +119,7 @@ export default function AdminFeeManagement() {
         if (!token) return;
         setSendingBulk(true);
         try {
-            const res = await axios.post("http://localhost:5001/admin/bulk-alert/send", {
+            const res = await axios.post(`${API_BASE_URL}/admin/bulk-alert/send`, {
                 ...bulkFilters,
                 message: bulkMessage
             }, {
@@ -147,7 +149,7 @@ export default function AdminFeeManagement() {
         if (!proceed) return;
 
         try {
-            const res = await axios.post("http://localhost:5001/admin/send-alert", {
+            const res = await axios.post(`${API_BASE_URL}/admin/send-alert`, {
                 email: student.email,
                 dueDate: student.due_date,
                 message: `Manual reminder for ${student.full_name}`
@@ -175,7 +177,7 @@ export default function AdminFeeManagement() {
     const handleHistory = async (student) => {
         const token = localStorage.getItem("token");
         try {
-            const res = await axios.get(`http://localhost:5001/admin/students/${student.id}/alerts`, {
+            const res = await axios.get(`${API_BASE_URL}/admin/students/${student.id}/alerts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setHistory(res.data.alerts || []);

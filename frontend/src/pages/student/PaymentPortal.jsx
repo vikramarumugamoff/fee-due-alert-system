@@ -5,6 +5,8 @@ import { FaArrowLeft, FaCreditCard, FaUniversity, FaMobileAlt } from "react-icon
 import PortalLayout from "../../components/PortalLayout";
 import { StudentSidebar } from "../../components/Sidebars";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function PaymentPortal() {
   const [student, setStudent] = useState(null);
   const [feeData, setFeeData] = useState(null);
@@ -35,7 +37,7 @@ export default function PaymentPortal() {
 
   const fetchStudentFeeData = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5001/student/fees/${email}`, {
+      const res = await axios.get(`${API_BASE_URL}/student/fees/${email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFeeData(res.data);
@@ -67,7 +69,7 @@ export default function PaymentPortal() {
     try {
       const token = localStorage.getItem("token");
       
-      const res = await axios.post("http://localhost:5001/student/pay-fee", {
+      const res = await axios.post(`${API_BASE_URL}/student/pay-fee`, {
         email: student.email,
         amount: parseFloat(amount),
         paymentMethod: paymentMethod,

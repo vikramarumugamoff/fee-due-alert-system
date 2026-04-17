@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BrandLogo from "../../components/BrandLogo";
 import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function AdminFeeStructure() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
@@ -37,7 +39,7 @@ export default function AdminFeeStructure() {
 
   const fetchFeeStructure = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/admin/fee-structure", {
+      const res = await axios.get(`${API_BASE_URL}/admin/fee-structure`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItems(res.data || []);
@@ -73,12 +75,12 @@ export default function AdminFeeStructure() {
     const token = localStorage.getItem("token");
     try {
       if (editing) {
-        await axios.put(`http://localhost:5001/admin/fee-structure/${editing.id}`, form, {
+        await axios.put(`${API_BASE_URL}/admin/fee-structure/${editing.id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Fee structure updated.");
       } else {
-        await axios.post("http://localhost:5001/admin/fee-structure", form, {
+        await axios.post(`${API_BASE_URL}/admin/fee-structure`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("Fee structure added.");
@@ -106,7 +108,7 @@ export default function AdminFeeStructure() {
     const token = localStorage.getItem("token");
     if (!window.confirm("Delete this fee structure?")) return;
     try {
-      await axios.delete(`http://localhost:5001/admin/fee-structure/${id}`, {
+      await axios.delete(`${API_BASE_URL}/admin/fee-structure/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchFeeStructure(token);

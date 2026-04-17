@@ -4,6 +4,8 @@ import axios from "axios";
 import PortalLayout from "../../components/PortalLayout";
 import { StudentSidebar } from "../../components/Sidebars";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function StudentDashboard() {
   const [student, setStudent] = useState(null);
   const [feeData, setFeeData] = useState(null);
@@ -32,7 +34,7 @@ export default function StudentDashboard() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get(`${API_BASE_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -53,7 +55,7 @@ export default function StudentDashboard() {
 
   const fetchNotifications = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/student/notifications", {
+      const res = await axios.get(`${API_BASE_URL}/student/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(res.data?.notifications || []);
@@ -65,7 +67,7 @@ export default function StudentDashboard() {
 
   const fetchStudentFeeData = async (email, token) => {
     try {
-      const res = await axios.get(`http://localhost:5001/student/fees/${email}`, {
+      const res = await axios.get(`${API_BASE_URL}/student/fees/${email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -79,7 +81,7 @@ export default function StudentDashboard() {
 
 
       const historyRes = await axios.get(
-        `http://localhost:5001/student/payment-history/${email}`,
+        `${API_BASE_URL}/student/payment-history/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

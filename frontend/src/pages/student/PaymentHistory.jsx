@@ -4,6 +4,8 @@ import axios from "axios";
 import PortalLayout from "../../components/PortalLayout";
 import { StudentSidebar } from "../../components/Sidebars";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+
 export default function PaymentHistory() {
   const [student, setStudent] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
@@ -30,7 +32,7 @@ export default function PaymentHistory() {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await axios.get("http://localhost:5001/me", {
+      const res = await axios.get(`${API_BASE_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.user) {
@@ -52,7 +54,7 @@ export default function PaymentHistory() {
   const fetchPaymentHistory = async (email, token) => {
     try {
       const res = await axios.get(
-        `http://localhost:5001/student/payment-history/${email}`,
+        `${API_BASE_URL}/student/payment-history/${email}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
