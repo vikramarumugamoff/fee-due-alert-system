@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import BrandLogo from "./BrandLogo";
 
 /**
@@ -6,6 +6,12 @@ import BrandLogo from "./BrandLogo";
  */
 export function StudentSidebar({ student, onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getBtnClass = (path) => 
+    location.pathname.startsWith(path)
+      ? "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
+      : "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3";
 
   return (
     <div className="flex flex-col h-full">
@@ -26,31 +32,31 @@ export function StudentSidebar({ student, onLogout }) {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <button
           onClick={() => navigate("/student/dashboard")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/student/dashboard")}
         >
           📊 Dashboard
         </button>
         <button
           onClick={() => navigate("/student/fee-structure")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/student/fee-structure")}
         >
           📋 Fee Structure
         </button>
         <button
           onClick={() => navigate("/student/payment-history")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/student/payment-history")}
         >
           📜 Payment History
         </button>
         <button
           onClick={() => navigate("/student/payment")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/student/payment")}
         >
           💳 Pay Fee
         </button>
         <button
           onClick={() => navigate("/student/profile")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/student/profile")}
         >
           👤 Profile
         </button>
@@ -87,7 +93,20 @@ export function StudentSidebar({ student, onLogout }) {
  */
 export function AdminSidebar({ admin, role, onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const isFeeManager = role === "fee_manager";
+
+  const getBtnClass = (path) => 
+    location.pathname.startsWith(path)
+      ? "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
+      : "w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3";
+
+  const getIconClass = (path) =>
+    location.pathname.startsWith(path)
+      ? "w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-[10px] font-bold text-white"
+      : "w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]";
+
+  const dashboardPath = isFeeManager ? "/fee-manager/dashboard" : "/admin/dashboard";
 
   return (
     <div className="flex flex-col h-full">
@@ -105,10 +124,10 @@ export function AdminSidebar({ admin, role, onLogout }) {
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <button
-          onClick={() => navigate(isFeeManager ? "/fee-manager/dashboard" : "/admin/dashboard")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+          onClick={() => navigate(dashboardPath)}
+          className={getBtnClass(dashboardPath)}
         >
-          <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">DB</span>
+          <span className={getIconClass(dashboardPath)}>DB</span>
           Dashboard
         </button>
         
@@ -116,30 +135,30 @@ export function AdminSidebar({ admin, role, onLogout }) {
           <>
             <button
               onClick={() => navigate("/admin/students")}
-              className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+              className={getBtnClass("/admin/students")}
             >
-              <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">SM</span>
+              <span className={getIconClass("/admin/students")}>SM</span>
               Student Management
             </button>
             <button
               onClick={() => navigate("/admin/users")}
-              className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+              className={getBtnClass("/admin/users")}
             >
-              <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">UM</span>
+              <span className={getIconClass("/admin/users")}>UM</span>
               User Management
             </button>
             <button
               onClick={() => navigate("/admin/fee-structure")}
-              className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+              className={getBtnClass("/admin/fee-structure")}
             >
-              <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">FS</span>
+              <span className={getIconClass("/admin/fee-structure")}>FS</span>
               Fee Structure
             </button>
             <button
               onClick={() => navigate("/admin/academic-structure")}
-              className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-[#5a6c7d] hover:bg-[#f5f6fa] hover:text-[#273c75] transition-all duration-300 flex items-center gap-3"
+              className={getBtnClass("/admin/academic-structure")}
             >
-              <span className="w-6 h-6 rounded-md bg-[#f1f2f6] flex items-center justify-center text-[10px] font-bold text-[#273c75]">AS</span>
+              <span className={getIconClass("/admin/academic-structure")}>AS</span>
               Academic Structure
             </button>
           </>
@@ -147,9 +166,10 @@ export function AdminSidebar({ admin, role, onLogout }) {
 
         <button
           onClick={() => navigate("/admin/fee-management")}
-          className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold bg-[#273c75] text-white shadow-md transition-all duration-300 flex items-center gap-3"
+          className={getBtnClass("/admin/fee-management")}
         >
-          <span>💳</span> Fee Management
+          <span className={getIconClass("/admin/fee-management")}>💳</span>
+          Fee Management
         </button>
       </nav>
 
